@@ -14,9 +14,9 @@ public class CreatureAPI {
     this.creature.setAcceleration(direction);
     return direction;
   }
-  public HashSet<CreatureObservation> getSurroundingCreatures() {
+  public Set<CreatureObservation> getSurroundingCreatures() {
     MapArea LOS = this.creature.getLineOfSite();
-    HashSet<CreatureObservation> observed = new HashSet<CreatureObservation>();
+    Set<CreatureObservation> observed = new HashSet<CreatureObservation>();
     for (CreatureObservation observation : this.world.getCreaturesInArea(LOS)) {
       PVector observedLocation = observation.getLocation();
       if (observedLocation != this.getLocation()) {
