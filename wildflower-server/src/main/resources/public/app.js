@@ -1,1 +1,0 @@
-../../../../../wildflower-web/build/app.js
