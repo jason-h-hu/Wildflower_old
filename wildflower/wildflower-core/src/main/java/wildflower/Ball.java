@@ -13,4 +13,17 @@ public class Ball {
         this.px = newPx;
         this.py = newPy;
     }
+
+    public float getPositionX() {
+        return px;
+    }
+
+    public float getPositionY() {
+        return py;
+    }
+
+    public void update() {
+        this.px-= 0.001;
+        this.py-= 0.001;
+    }
 }
