@@ -12,17 +12,22 @@ public class WildflowerWebSocket {
     @OnWebSocketConnect
     public void connected(Session session) throws IOException {
         System.out.println("Connected!");
-        while (true) {
-            String balls = "[";
-            for (Ball ball : WildflowerServer.world.getBalls()) {
-                balls += String.format("{x:%f,y:%f},", ball.getPositionX(), ball.getPositionY());
+        while (session.isOpen()) {
+            StringBuilder jsonPre = new StringBuilder();
+            jsonPre.append("[");
+            WildflowerServer.world.getEntities().forEach(entity -> {
+                jsonPre.append(String.format("{\"x\":%f,\"y\":%f},",
+                    entity.getLocation().x,
+                    entity.getLocation().y));
+            });
+            String json = jsonPre.toString();
+            if (json.endsWith(",")) {
+                json = json.substring(0, json.length() - 1);
             }
-            if (balls.endsWith(",")) balls = balls.substring(0, balls.length() - 1);
-            balls += "]";
-            System.out.println(balls);
-            session.getRemote().sendString(balls);
+            json += "]";
+            session.getRemote().sendString(json);
             try {
-                Thread.sleep(100);
+                Thread.sleep(WildflowerServer.tickMillis);
             } catch (InterruptedException e) {}
         }
     }
@@ -35,6 +40,5 @@ public class WildflowerWebSocket {
     @OnWebSocketMessage
     public void message(Session session, String message) throws IOException {
         System.out.println("Got: " + message);
-        session.getRemote().sendString(message);
     }
 }

@@ -1,1 +1,5 @@
 apply plugin: 'java'
+
+dependencies {
+    compile 'org.joml:joml:1.8.4'
+}
