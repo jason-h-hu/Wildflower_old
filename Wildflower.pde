@@ -1,4 +1,6 @@
 import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 int SIZE = 2;
@@ -6,7 +8,7 @@ int W = 500;
 int H = 400;
 World world; 
 
-private HashSet<Agent> agents = new HashSet<Agent>();
+private Set<Agent> agents = new HashSet<Agent>();
 
 void settings() {
   size(W*SIZE, H*SIZE);

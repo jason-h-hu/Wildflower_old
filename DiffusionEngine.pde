@@ -27,7 +27,7 @@ public class DiffusionEngine {
         newWorld[i][j] += newConcentration;
 
         if (newConcentration > 0) {
-          ArrayList<PVector> neighbors = GridHelper.getNeighbors(this.world, i, j);
+          List<PVector> neighbors = GridHelper.getNeighbors(this.world, i, j);
           int flowPerNeighbor = (int)((this.FLOW_RATE*currentConcentration)/neighbors.size());
           for (PVector neighbor: neighbors) { 
             int x = (int) neighbor.x;

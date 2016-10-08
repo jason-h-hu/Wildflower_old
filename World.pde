@@ -1,7 +1,7 @@
 public class World {
   
-  private HashSet<Entity> entities;
-  private HashSet<Creature> creatures;
+  private Set<Entity> entities;
+  private Set<Creature> creatures;
   private DiffusionEngine environment;
 
   public World(int W, int H) {
@@ -28,7 +28,7 @@ public class World {
   }
   public void updateEntities() {
     for (Entity entity : this.entities) {
-      HashSet<Entity> collisions = this.getCollisions(entity);
+      Set<Entity> collisions = this.getCollisions(entity);
       entity.update();
       if (collisions.size() > 0) {
       }
@@ -48,8 +48,8 @@ public class World {
     }
   }
 
-  public HashSet<Entity> getCollisions(Entity entity) {
-    HashSet<Entity> collisions = new HashSet<Entity>();
+  public Set<Entity> getCollisions(Entity entity) {
+    Set<Entity> collisions = new HashSet<Entity>();
     MapArea hitBox = entity.getHitBox();    
     for (Entity e : this.entities) {
       if (e.getID() != entity.getID()) {
@@ -61,8 +61,8 @@ public class World {
     return collisions;
   }
   
-  public HashSet<CreatureObservation> getCreaturesInArea(MapArea mapArea) {
-    HashSet<CreatureObservation> observedCreatures = new HashSet<CreatureObservation>();
+  public Set<CreatureObservation> getCreaturesInArea(MapArea mapArea) {
+    Set<CreatureObservation> observedCreatures = new HashSet<CreatureObservation>();
     for (Creature c : this.creatures) {
       if (WorldHelper.isColliding(mapArea, c.getHitBox())) {
         observedCreatures.add(c);
