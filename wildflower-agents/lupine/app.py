@@ -9,9 +9,7 @@ class CreatureApi(object):
   def __init__(self, path, location):
     super(CreatureApi, self).__init__()
     self.path = path
-    r = requests.post(path + '?x=' + str(location['x']) + '&y=' + str(location['y']))
-    if (r.status_code != 200):
-      raise Exception('Got error code %d on posting. Check path %s' % (r.status_code, path))
+    r = self.post_helper(self.path + '/creature', { 'location': location })
     self.id = r.content
 
   def get_helper(self, path):
@@ -20,11 +18,11 @@ class CreatureApi(object):
       raise Exception('Got error code %d on getting. Check path %s' % (r.status_code, path))
     return r.json()
 
-  def post_helper(self, path, data):
-    r = requests.post(path, data = data)
+  def post_helper(self, path, json):
+    r = requests.post(path, json=json)
     if (r.status_code != 200):
       raise Exception('Got error code %d on posting. Check path %s' % (r.status_code, path))
-    return r.content
+    return r
 
   def get_creature(self):
     return self.get_helper(self.path + '/creature/' + self.id)
@@ -39,7 +37,7 @@ class Lupine(object):
   """docstring for Lupine"""
   def __init__(self):
     super(Lupine, self).__init__()
-    self.creature_api = CreatureApi('http://localhost:9090', { 'x': 100, 'y': 100 })
+    self.creature_api = CreatureApi('http://localhost:9090/api/v0', { 'x': 500, 'y': 500 })
 
   def run(self):
     while True:
@@ -50,7 +48,7 @@ class Lupine(object):
           }
       }
       self.creature_api.post_movement(movement)
-      time.sleep(5)
+      time.sleep(0.5)
       # get neighbors
       # get best neighbors
       # execute action
