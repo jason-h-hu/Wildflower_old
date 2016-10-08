@@ -2,8 +2,11 @@ package wildflower;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.UUID;
 
 import org.joml.Vector2f;
+
+import org.json.JSONObject;
 
 import static spark.Spark.*;
 
@@ -24,10 +27,18 @@ public class WildflowerServer {
         webSocket("/wildflower", WildflowerWebSocket.class);
 
         post("/creature", (request, response) -> {
-            Vector2f location = new Vector2f(
-                Float.parseFloat(request.queryParams("x")),
-                Float.parseFloat(request.queryParams("y")));
-            return world.addCreature(location);
+            JSONObject payload = new JSONObject(request.body());
+            JSONArray location = new payload.getJSONArray("location");
+            Vector2f locationVector = new Vector2f(location.getDouble(0), location.getDouble(1));
+            return world.addCreature(locationVector);
+        });
+
+        post("/creature/:id/move", (request, response) -> {
+            UUID id = UUID.fromString(request.params("id"));
+            JSONObject payload = new JSONObject(request.body());
+            JSONArray force = payload.getJSONArray("force");
+            Vector2f forceVector = new Vector2f(force.getDouble(0), force.getDouble(1))
+            return world.move(id, forceVector);
         });
     }
 }
