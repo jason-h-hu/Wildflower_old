@@ -17,7 +17,7 @@ import static spark.Spark.*;
 
 public class WildflowerServer {
     public static World world = new World();
-    public static int tickMillis = 50;
+    public static int tickMillis = 5;
 
     public static void main(String[] args) {
         ExecutorService executor = Executors.newSingleThreadExecutor();

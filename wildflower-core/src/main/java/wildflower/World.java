@@ -20,6 +20,9 @@ public class World implements CreatureApi {
     private Map<UUID, Entity> entities;
     private Map<UUID, Creature> creatures;
     private boolean running;
+    private final int targetFps = 60;
+    private final long optimalTime = 1000000000 / targetFps;
+    private int frameRate = 0;
 
     public World() {
         this.entities = new ConcurrentHashMap<>();
@@ -29,8 +32,30 @@ public class World implements CreatureApi {
 
     public void start() {
         running = true;
+
+        long lastLoopTime = System.nanoTime();
+        int fps = 0;
+        long lastFpsTime = 0;
+
         while(running) {
-            this.update();
+            long now = System.nanoTime();
+            long updateLength = now - lastLoopTime;
+            lastLoopTime = now;
+            double delta = updateLength / ((double) optimalTime);
+
+            lastFpsTime += updateLength;
+            fps++;
+
+            if (lastFpsTime >= 1000000000) {
+                this.frameRate = fps;
+                lastFpsTime = 0;
+                fps = 0;
+            }
+
+            this.update(delta);
+            try {
+                Thread.sleep((lastLoopTime - System.nanoTime() + optimalTime) / 1000000);
+            } catch (Exception e) {}
         }
     }
 
@@ -52,7 +77,7 @@ public class World implements CreatureApi {
         this.entities.values().forEach(Entity::update);
     }
 
-    public void update() {
+    public void update(double delta) {
         this.reapDeadCreatures();
         this.updateEntities();
     }
