@@ -1,1 +1,4 @@
-export const initialState = { messages: [] }
+export const initialState = {
+  messages: [],
+  entities: [],
+}

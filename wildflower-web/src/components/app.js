@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
+import { ConnectedWorld } from './world';
 
 export class App extends React.Component {
     render() {
@@ -9,6 +10,7 @@ export class App extends React.Component {
 
         return (
             <div>
+                <ConnectedWorld/>
                 {messageElements}
             </div>
         );
