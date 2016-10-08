@@ -1,34 +1,37 @@
-public class World {
+public class World implements CreatureAPI {
   
-  private HashSet<Entity> entities;
-  private HashSet<Creature> creatures;
+  private Map<UUID, Entity> entities;
+  private Map<UUID, Creature> creatures;
   private DiffusionEngine environment;
 
   public World(int W, int H) {
-    this.entities = new HashSet<Entity>();
-    this.creatures = new HashSet<Creature>();
+    this.entities = new ConcurrentHashMap<UUID, Entity>();
+    this.creatures = new ConcurrentHashMap<UUID, Creature>();
     
     // ew gross how do I not use global SIZE
     this.environment = new DiffusionEngine(W/SIZE, H/SIZE, SIZE, 0.2, 5);
-
   }
   
-  public void addCreature(Creature creature) {
-    this.entities.add(creature);
-    this.creatures.add(creature);
+  public UUID addCreature(PVector location) {
+    Creature creature = new Creature(location);
+    UUID id = creature.getID();
+    this.creatures.put(id, creature);
+    this.entities.put(id, creature);
+    return id;
   }
 
   public void cullCreatures() {
-    HashSet<Creature> removeList = new HashSet<Creature>();
-    for (Creature creature : this.creatures) {
-      if (creature.isDead()) removeList.add(creature);
+    for (Creature creature : this.creatures.values()) {
+      if (creature.isDead()) {
+        UUID id = creature.getID();
+        this.creatures.remove(id);
+        this.entities.remove(id);
+      }
     }
-    this.creatures.removeAll(removeList);
-    this.entities.removeAll(removeList);
   }
   public void updateEntities() {
-    for (Entity entity : this.entities) {
-      HashSet<Entity> collisions = this.getCollisions(entity);
+    for (Entity entity : this.entities.values()) {
+      Set<Entity> collisions = this.getCollisions(entity);
       entity.update();
       if (collisions.size() > 0) {
       }
@@ -43,15 +46,15 @@ public class World {
   
   public void render() {
     environment.render();
-    for (Entity entity : this.entities) {
+    for (Entity entity : this.entities.values()) {
       entity.render();
     }
   }
 
-  public HashSet<Entity> getCollisions(Entity entity) {
-    HashSet<Entity> collisions = new HashSet<Entity>();
+  public Set<Entity> getCollisions(Entity entity) {
+    Set<Entity> collisions = new HashSet<Entity>();
     MapArea hitBox = entity.getHitBox();    
-    for (Entity e : this.entities) {
+    for (Entity e : this.entities.values()) {
       if (e.getID() != entity.getID()) {
         if (WorldHelper.isColliding(hitBox, e.getHitBox())) {
           collisions.add(e);
@@ -61,14 +64,54 @@ public class World {
     return collisions;
   }
   
-  public HashSet<CreatureObservation> getCreaturesInArea(MapArea mapArea) {
-    HashSet<CreatureObservation> observedCreatures = new HashSet<CreatureObservation>();
-    for (Creature c : this.creatures) {
+  public Set<Creature> getCreaturesInArea(MapArea mapArea) {
+    Set<Creature> observedCreatures = new HashSet<Creature>();
+    for (Creature c : this.creatures.values()) {
       if (WorldHelper.isColliding(mapArea, c.getHitBox())) {
         observedCreatures.add(c);
       }
     }
     return observedCreatures;
+  }
+  
+  public PVector move(UUID id, PVector direction) {
+    Creature creature = this.creatures.get(id);
+    if (creature == null) return null;
+    
+    // TODO: Normalize direction
+    creature.setAcceleration(direction);
+    return direction;
+  }
+  public Set<CreatureObservation> getSurroundingCreatures(UUID id) {
+    Set<CreatureObservation> observed = new HashSet<CreatureObservation>();
+    Creature creature = this.creatures.get(id);
+    if (creature == null) {
+      return observed;
+    }
+
+    MapArea LOS = creature.getLineOfSite();
+    for (Creature observation : this.getCreaturesInArea(LOS)) {
+      UUID observedId = observation.getID();
+      if (observedId != creature.getID()) {
+        observed.add(observation);
+      }
+    }
+    return observed;
+  }
+  public PVector getLocation(UUID id) {
+    Creature creature = this.creatures.get(id);
+    if (creature == null) {
+      return null;
+    }
+    return creature.getLocation();
+  }
+  
+  public CreatureState getCreature(UUID id) {
+    Creature creature = this.creatures.get(id);
+    if (creature == null) {
+      return null;
+    }
+    return creature;
   }
 }
 

@@ -9,8 +9,8 @@ public class Agent {
     
   public void act() {
     CreatureObservation closest = null;
-    PVector location = this.creatureAPI.getLocation();
-    for (CreatureObservation observation : this.creatureAPI.getSurroundingCreatures()) {
+    PVector location = this.creatureAPI.getLocation(this.id);
+    for (CreatureObservation observation : this.creatureAPI.getSurroundingCreatures(this.id)) {
       if (closest == null) {
         closest = observation;
       } else {
@@ -22,9 +22,13 @@ public class Agent {
       }
     }
     PVector acceleration = closest == null ? 
-      new PVector(random(-1, 1), random(-1, 1)) : 
+      new PVector(0, 0) : 
       PVector.sub(location, closest.getLocation()).normalize();
       
-    this.creatureAPI.move(acceleration);
+    this.creatureAPI.move(this.id, acceleration);
+  }
+  
+  public UUID getID() {
+    return this.id;
   }
 }
