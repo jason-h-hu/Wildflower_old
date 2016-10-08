@@ -1,4 +1,4 @@
-public class Creature extends Entity implements CreatureObservation{
+public class Creature extends Entity implements CreatureObservation, CreatureState {
   private float radius = 20;
   private float lineOfSite = 80;
   
@@ -46,3 +46,5 @@ public interface CreatureObservation {
   public PVector getLocation();
   public MapArea getHitBox();
 }
+
+public interface CreatureState {}
