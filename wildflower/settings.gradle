@@ -1,0 +1,5 @@
+rootProject.name = 'wildflower'
+
+include 'wildflower-core'
+include 'wildflower-server'
+include 'wildflower-web'

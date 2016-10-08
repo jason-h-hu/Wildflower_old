@@ -1,0 +1,16 @@
+apply plugin: 'java'
+apply plugin: 'application'
+
+dependencies {
+    compile project(':wildflower-core')
+    compile 'com.sparkjava:spark-core:2.5'
+    compile 'com.corundumstudio.socketio:netty-socketio:1.7.12'
+}
+
+mainClassName='wildflower.WildflowerServer'
+
+jar {
+    manifest {
+        attributes 'Main-Class': mainClassName
+    }
+}
