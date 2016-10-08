@@ -28,17 +28,18 @@ public class WildflowerServer {
 
         post("/creature", (request, response) -> {
             JSONObject payload = new JSONObject(request.body());
-            JSONArray location = new payload.getJSONArray("location");
-            Vector2f locationVector = new Vector2f(location.getDouble(0), location.getDouble(1));
+            JSONObject location = payload.getJSONObject("location");
+            Vector2f locationVector = new Vector2f((float)location.getDouble("x"), (float)location.getDouble("y"));
             return world.addCreature(locationVector);
         });
 
         post("/creature/:id/move", (request, response) -> {
             UUID id = UUID.fromString(request.params("id"));
             JSONObject payload = new JSONObject(request.body());
-            JSONArray force = payload.getJSONArray("force");
-            Vector2f forceVector = new Vector2f(force.getDouble(0), force.getDouble(1))
-            return world.move(id, forceVector);
+            JSONObject force = payload.getJSONObject("force");
+            Vector2f forceVector = new Vector2f((float)force.getDouble("x"), (float)force.getDouble("y"));
+            world.move(id, forceVector);
+            return "";
         });
     }
 }
