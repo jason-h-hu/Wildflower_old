@@ -20,6 +20,7 @@ public class WildflowerServer {
         });
 
         port(9090);
+        staticFiles.location("/public");
         webSocket("/wildflower", WildflowerWebSocket.class);
 
         post("/creature", (request, response) -> {
@@ -28,7 +29,5 @@ public class WildflowerServer {
                 Float.parseFloat(request.queryParams("y")));
             return world.addCreature(location);
         });
-
-        staticFiles.location("/public");
     }
 }
