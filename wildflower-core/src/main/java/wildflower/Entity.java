@@ -16,7 +16,7 @@ public abstract class Entity {
     public Entity(Vector2f location) {
         this.force = new Vector2f(0, 0);
         this.velocity = new Vector2f(0, 0);
-        this.mass = 10;
+        this.mass = 1;
         this.location = location;
         this.id = UUID.randomUUID();
     }

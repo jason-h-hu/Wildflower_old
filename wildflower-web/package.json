@@ -7,9 +7,9 @@
   "main": "src/main.js",
   "scripts": {
     "clean": "rm -rf build",
-    "watch": "watchify -v -d -t [ babelify --presets [ es2015 react ] ] src/main.js -o build/app.js",
+    "watch": "watchify -v -d -t [ babelify --presets [ es2015 react ] ] src/main.js -o build/compiled.js",
     "build": "npm-run-all -s build:mkdir build:compile",
-    "build:compile": "browserify -t [ babelify --presets [ es2015 react ] ] src/main.js > build/app.js",
+    "build:compile": "browserify -t [ babelify --presets [ es2015 react ] ] src/main.js > build/compiled.js",
     "build:mkdir": "mkdir -p build"
   },
   "devDependencies": {
