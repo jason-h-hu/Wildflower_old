@@ -2,17 +2,8 @@
 
 \# [Spark](http://sparkjava.com/) / [Gson](https://github.com/google/gson) / [JOML](http://joml-ci.github.io/JOML/) / [WebSockets](https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API) / [React](https://facebook.github.io/react/) / [Redux](http://redux.js.org/)
 
-Wildflower is a sandbox game about creatures. Creatures in wildflower are controlled by Agents, which are programs written by Wildflower players. Agents must interact with the [Wildflower HTTP API](https://github.com/jason-h-hu/Wildflower/wiki/Wildflower-HTTP-Api-for-Agents) in order to manipulate their Creature, and observe the Wildflower World through its eyes. It is composed of:
+Wildflower is a sandbox game about creatures. Creatures in wildflower are controlled by Agents, which are programs written by Wildflower players. Agents must interact with the [Wildflower HTTP API](https://github.com/jason-h-hu/Wildflower/wiki/Wildflower-HTTP-Api-for-Agents) in order to manipulate their Creature, and observe the Wildflower World through its eyes. 
 
-## Core
-The Wildflower Core is a physical simulation of the mechanics of the Wildflower world. It manages Creatures and their physical interactions with their environment and each other.
+For more information, check out [The Wiki](https://github.com/jason-h-hu/Wildflower/wiki)!
 
-## Web
-Wildflower Web is a web application which visualizes the world of Wildflower
-
-## Server
-Wildflower Server runs an instance of the Wildflower World and exposes an HTTP API with which Agents can acquire and control Creatures. It also hosts and communicates with the Wildflower Web application via WebSockets for real time rendering.
-
-## Agents
-Wildflower Agents are the brains of Creatures in Wildflower. The `wildflower-agents` directory contains some example implementations in various languages.
 
