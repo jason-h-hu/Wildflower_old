@@ -1,10 +1,18 @@
 package wildflower;
 
+import wildflower.api.EntityRenderingModel;
+
 import org.eclipse.jetty.websocket.api.*;
 import org.eclipse.jetty.websocket.api.annotations.*;
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.stream.Collectors;
+
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+
+import org.joml.Vector2f;
 
 @WebSocket
 public class WildflowerWebSocket {
@@ -12,20 +20,16 @@ public class WildflowerWebSocket {
     @OnWebSocketConnect
     public void connected(Session session) throws IOException {
         System.out.println("Connected!");
+
+        Gson gson = new GsonBuilder()
+            .registerTypeAdapter(Vector2f.class, new Vector2fSerializer())
+            .registerTypeAdapter(Vector2f.class, new Vector2fDeserializer())
+            .create();
+
         while (session.isOpen()) {
-            StringBuilder jsonPre = new StringBuilder();
-            jsonPre.append("[");
-            WildflowerServer.world.getEntities().forEach(entity -> {
-                jsonPre.append(String.format("{\"x\":%f,\"y\":%f},",
-                    entity.getLocation().x,
-                    entity.getLocation().y));
-            });
-            String json = jsonPre.toString();
-            if (json.endsWith(",")) {
-                json = json.substring(0, json.length() - 1);
-            }
-            json += "]";
-            session.getRemote().sendString(json);
+            List<EntityRenderingModel> entitiesToRender = WildflowerServer.world.getEntities().stream()
+                .map(EntityRenderingModel::new).collect(Collectors.toList());
+            session.getRemote().sendString(gson.toJson(entitiesToRender));
             try {
                 Thread.sleep(WildflowerServer.tickMillis);
             } catch (InterruptedException e) {}

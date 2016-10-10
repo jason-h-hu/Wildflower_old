@@ -11,13 +11,17 @@ public abstract class Entity {
     private Vector2f velocity;
     protected Vector2f location;
     private float mass;
+    private long timeOfBirth;
+    private long timeOfDeath;
     private UUID id;
 
-    public Entity(Vector2f location) {
+    public Entity(Vector2f location, long timeOfBirth) {
         this.force = new Vector2f(0, 0);
         this.velocity = new Vector2f(0, 0);
         this.mass = 1;
         this.location = location;
+        this.timeOfBirth = timeOfBirth;
+        this.timeOfDeath = Long.MIN_VALUE;
         this.id = UUID.randomUUID();
     }
 
@@ -26,6 +30,14 @@ public abstract class Entity {
         // TODO: limit velocity
         this.location.add(this.velocity);
         this.force.set(0, 0);
+    }
+
+    public long getTimeOfBirth() {
+        return timeOfBirth;
+    }
+
+    public long getTimeOfDeath() {
+        return timeOfDeath;
     }
 
     public void applyForce(Vector2f force) {

@@ -6,22 +6,12 @@ import wildflower.geometry.Circle;
 
 import org.joml.Vector2f;
 
-public class Creature extends Entity implements CreatureObservation, CreatureState {
+public class Creature extends Entity {
     private float radius;
     private float lineOfSight;
 
-    public Creature(Vector2f location) {
-        super(location);
-    }
-
-    @Override
-    public Vector2f getLocation() {
-        return super.getLocation(); // this is dumb
-    }
-
-    @Override
-    public void update() {
-        super.update();
+    public Creature(Vector2f location, long timeOfBirth) {
+        super(location, timeOfBirth);
     }
 
     @Override

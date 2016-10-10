@@ -1,7 +1,8 @@
 package wildflower;
 
-import wildflower.creature.CreatureState;
-import wildflower.creature.CreatureObservation;
+import wildflower.creature.CreatureApi;
+import wildflower.api.CreatureModel;
+import wildflower.api.ObservationModel;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -10,8 +11,8 @@ import java.util.Set;
 
 import org.joml.Vector2f;
 
-import org.json.JSONObject;
-import org.json.JSONArray;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
 import static spark.Spark.*;
 
@@ -20,6 +21,8 @@ public class WildflowerServer {
     public static int tickMillis = 5;
 
     public static void main(String[] args) {
+
+        // Start up World in its own Executor thread
         ExecutorService executor = Executors.newSingleThreadExecutor();
         executor.submit(() -> {
             String threadName = Thread.currentThread().getName();
@@ -27,50 +30,36 @@ public class WildflowerServer {
             world.start();
         });
 
+        // Creature Gson to marshal Model objects back and forth between their JSON representations
+        Gson gson = new GsonBuilder()
+            .registerTypeAdapter(Vector2f.class, new Vector2fSerializer())
+            .registerTypeAdapter(Vector2f.class, new Vector2fDeserializer())
+            .create();
+
+        // Setup port, static file location, connect websocket endpoint
         port(9090);
         staticFiles.location("/public");
         webSocket("/wildflower", WildflowerWebSocket.class);
 
-        post("/api/v0/creature", (request, response) -> {
-            JSONObject payload = new JSONObject(request.body());
-            JSONObject location = payload.getJSONObject("location");
-            Vector2f locationVector = new Vector2f((float)location.getDouble("x"), (float)location.getDouble("y"));
-            return world.addCreature(locationVector);
-        });
+        // request new creature at location
+        post("api/v0/creature", (request, response) -> {
+            return new CreatureModel(world.addCreature(gson.fromJson(request.body(), Vector2f.class)));
+        }, gson::toJson);
 
-        get("/api/v0/creature/:id", (request, response) -> {
-            UUID id = UUID.fromString(request.params("id"));
-            CreatureState creatureState = world.getCreatureState(id);
-            JSONObject creatureLocation = new JSONObject();
-            creatureLocation.put("x", creatureState.getLocation().x);
-            creatureLocation.put("y", creatureState.getLocation().y);
-            JSONObject creatureData = new JSONObject();
-            creatureData.put("location", creatureLocation);
-            return creatureData.toString();
-        });
+        // get information about creature by id
+        get("api/v0/creature/:id", (request, response) -> {
+            return new CreatureModel(world.getCreature(UUID.fromString(request.params("id"))));
+        }, gson::toJson);
 
-        get("/api/v0/creature/:id/observation", (request, response) -> {
-            UUID id = UUID.fromString(request.params("id"));
-            Set<CreatureObservation> creatureObservations = world.getSurroundingCreatures(id);
-            JSONArray creatures = new JSONArray();
-            creatureObservations.forEach(creatureObservation -> {
-                JSONObject location = new JSONObject();
-                location.put("x", creatureObservation.getLocation().x);
-                location.put("y", creatureObservation.getLocation().y);
-                JSONObject observationData = new JSONObject();
-                observationData.put("location", location);
-                creatures.put(observationData);
-            });
-            return creatures.toString();
-        });
+        // get observation from creature by id
+        get("api/v0/creature/:id/observation", (request, response) -> {
+            return new ObservationModel(world.getSurroundingCreatures(UUID.fromString(request.params("id"))));
+        }, gson::toJson);
 
-        post("/api/v0/creature/:id/move", (request, response) -> {
-            UUID id = UUID.fromString(request.params("id"));
-            JSONObject payload = new JSONObject(request.body());
-            JSONObject force = payload.getJSONObject("force");
-            Vector2f forceVector = new Vector2f((float)force.getDouble("x"), (float)force.getDouble("y"));
-            world.move(id, forceVector);
+        // move creature by id
+        post("api/v0/creature/:id/move", (request, response) -> {
+            world.move(UUID.fromString(request.params("id")), gson.fromJson(request.body(), Vector2f.class));
             return "";
-        });
+        }, gson::toJson);
     }
 }
