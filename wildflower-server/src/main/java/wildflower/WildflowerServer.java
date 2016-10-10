@@ -67,7 +67,6 @@ public class WildflowerServer {
                     e.printStackTrace();
                 }
             }
-
         });
 
         // Creature Gson to marshal Model objects back and forth between their JSON representations

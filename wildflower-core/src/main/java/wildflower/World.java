@@ -66,7 +66,7 @@ public class World implements CreatureApi {
         this.updateEntities();
     }
 
-    public void reapDeadCreatures() {
+    private void reapDeadCreatures() {
         this.creatures.values().forEach(creature -> {
             if (creature.isDead()) {
                 UUID id = creature.getID();
@@ -76,7 +76,7 @@ public class World implements CreatureApi {
         });
     }
 
-    public void updateEntities() {
+    private void updateEntities() {
         this.entities.values().forEach(Entity::update);
     }
 
