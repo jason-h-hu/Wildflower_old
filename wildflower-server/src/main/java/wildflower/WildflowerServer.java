@@ -1,24 +1,33 @@
 package wildflower;
 
-import wildflower.creature.CreatureApi;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import org.joml.Vector2f;
 import wildflower.api.CreatureModel;
 import wildflower.api.ObservationModel;
 
+import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.UUID;
-import java.util.Set;
 
-import org.joml.Vector2f;
+import static spark.Spark.get;
+import static spark.Spark.port;
+import static spark.Spark.post;
+import static spark.Spark.staticFiles;
+import static spark.Spark.webSocket;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-
-import static spark.Spark.*;
 
 public class WildflowerServer {
-    public static World world = new World();
-    public static int tickMillis = 5;
+    private static final long ONE_MILLISECOND = 1000000;
+    private static final long ONE_SECOND = 1000000000;
+    private static final int TARGET_FPS = 60;
+    private static final long OPTIMAL_TIME = ONE_SECOND / TARGET_FPS;
+
+    static World world = new World();
+    static int webSocketPushDelay = 5;
+
+    private static int framesPerSecond = 0;
+    private static boolean running = false;
 
     public static void main(String[] args) {
 
@@ -27,7 +36,38 @@ public class WildflowerServer {
         executor.submit(() -> {
             String threadName = Thread.currentThread().getName();
             System.out.println("Startng world in " + threadName);
-            world.start();
+            running = true;
+
+            double delta = 0;
+            long lastLoopTime = System.nanoTime();
+            long lastFpsTime = 0;
+            long now = lastLoopTime;
+            long updateLength = 0;
+            int fps = 0;
+
+            while (running) {
+                now = System.nanoTime();
+                updateLength = now - lastLoopTime;
+                lastLoopTime = now;
+                delta = updateLength / ((double) OPTIMAL_TIME);
+                lastFpsTime += updateLength;
+                fps++;
+
+                if (lastFpsTime >= ONE_SECOND) {
+                    framesPerSecond = fps;
+                    lastFpsTime = 0;
+                    fps = 0;
+                }
+
+                world.update(delta);
+
+                try {
+                    Thread.sleep((lastLoopTime - System.nanoTime() + OPTIMAL_TIME) / ONE_MILLISECOND);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+
         });
 
         // Creature Gson to marshal Model objects back and forth between their JSON representations
