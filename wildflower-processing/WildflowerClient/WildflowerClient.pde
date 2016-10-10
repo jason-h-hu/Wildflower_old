@@ -51,9 +51,7 @@ void draw() {
 }
 
 void webSocketEvent(String message) {
-  lock = true;
   Collection<RenderableEntityModel> entities = gson.fromJson(message, collectionType);
   renderableEntities.clear();
   renderableEntities.addAll(entities);
-  lock = false;
 }
