@@ -1,12 +1,21 @@
 package wildflower;
 
+import org.eclipse.jetty.websocket.api.Session;
+import wildflower.api.CreatureModel;
+import wildflower.api.ObservationModel;
+import wildflower.api.ViewportModel;
+import wildflower.gson.Vector2fSerializer;
+import wildflower.gson.Vector2fDeserializer;
+import wildflower.websocket.EntityWebSocket;
+import wildflower.websocket.ViewportWebSocket;
+
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.joml.Vector2f;
-import wildflower.api.CreatureModel;
-import wildflower.api.ObservationModel;
 
+import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -18,16 +27,43 @@ import static spark.Spark.webSocket;
 
 
 public class WildflowerServer {
-    private static final long ONE_MILLISECOND = 1000000;
-    private static final long ONE_SECOND = 1000000000;
-    private static final int TARGET_FPS = 60;
-    private static final long OPTIMAL_TIME = ONE_SECOND / TARGET_FPS;
+    public static final World world;
+    private static final long ONE_MILLISECOND;
+    private static final long ONE_SECOND;
+    private static final int TARGET_FPS;
+    private static final long OPTIMAL_TIME;
+    private static boolean running;
+    public static final int webSocketPushDelay;
+    public static final Map<Session, UUID> sessionsToBrowserSessionIds;
+    public static final Map<UUID, ViewportModel> browserSessionIdsToViewports;
+    public static final Gson gson;
 
-    static World world = new World();
-    static int webSocketPushDelay = 5;
+    static {
+        world = new World();
+        ONE_MILLISECOND = 1000000;
+        ONE_SECOND = 1000000000;
+        TARGET_FPS = 60;
+        OPTIMAL_TIME = ONE_SECOND / TARGET_FPS;
+        running = false;
+        webSocketPushDelay = 10;
+        sessionsToBrowserSessionIds = new ConcurrentHashMap<>();
+        browserSessionIdsToViewports = new ConcurrentHashMap<>();
+        gson = new GsonBuilder()
+                .registerTypeAdapter(Vector2f.class, new Vector2fSerializer())
+                .registerTypeAdapter(Vector2f.class, new Vector2fDeserializer())
+                .create();
+    }
 
-    private static int framesPerSecond = 0;
-    private static boolean running = false;
+    public static boolean tryIndexSession(Session session, String message) {
+        if (!sessionsToBrowserSessionIds.containsKey(session)) {
+            UUID id = UUID.fromString(message);
+            sessionsToBrowserSessionIds.put(session, id);
+            System.out.printf("Associated WebSocket session on %s with id %s%n",
+                    session.getRemoteAddress().getHostName(), id.toString());
+            return true;
+        }
+        return false;
+    }
 
     public static void main(String[] args) {
 
@@ -43,6 +79,7 @@ public class WildflowerServer {
             long lastFpsTime = 0;
             long now = lastLoopTime;
             long updateLength = 0;
+            long framesPerSecond = 0;
             int fps = 0;
 
             while (running) {
@@ -69,33 +106,30 @@ public class WildflowerServer {
             }
         });
 
-        // Creature Gson to marshal Model objects back and forth between their JSON representations
-        Gson gson = new GsonBuilder()
-            .registerTypeAdapter(Vector2f.class, new Vector2fSerializer())
-            .registerTypeAdapter(Vector2f.class, new Vector2fDeserializer())
-            .create();
-
         // Setup port, static file location, connect websocket endpoint
         port(9090);
         staticFiles.location("/public");
-        webSocket("/wildflower", WildflowerWebSocket.class);
 
-        // request new creature at location
+        // Setup web socket endpoints
+        webSocket("/entity", EntityWebSocket.class);
+        webSocket("/viewport", ViewportWebSocket.class);
+
+        // (PUBLIC) request new creature at location
         post("api/v0/creature", (request, response) -> {
             return new CreatureModel(world.addCreature(gson.fromJson(request.body(), Vector2f.class)));
         }, gson::toJson);
 
-        // get information about creature by id
+        // (PUBLIC) get information about creature by id
         get("api/v0/creature/:id", (request, response) -> {
             return new CreatureModel(world.getCreature(UUID.fromString(request.params("id"))));
         }, gson::toJson);
 
-        // get observation from creature by id
+        // (PUBLIC) get observation from creature by id
         get("api/v0/creature/:id/observation", (request, response) -> {
             return new ObservationModel(world.getSurroundingCreatures(UUID.fromString(request.params("id"))));
         }, gson::toJson);
 
-        // move creature by id
+        // (PUBLIC) move creature by id
         post("api/v0/creature/:id/move", (request, response) -> {
             world.move(UUID.fromString(request.params("id")), gson.fromJson(request.body(), Vector2f.class));
             return "";
