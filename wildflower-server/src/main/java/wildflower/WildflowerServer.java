@@ -1,9 +1,11 @@
 package wildflower;
 
 import org.eclipse.jetty.websocket.api.Session;
+import wildflower.api.ClientModel;
 import wildflower.api.CreatureModel;
 import wildflower.api.ObservationModel;
-import wildflower.api.ViewportModel;
+import wildflower.gson.UuidDeserializer;
+import wildflower.gson.UuidSerializer;
 import wildflower.gson.Vector2fSerializer;
 import wildflower.gson.Vector2fDeserializer;
 import wildflower.websocket.EntityWebSocket;
@@ -13,6 +15,8 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.joml.Vector2f;
 
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -34,8 +38,8 @@ public class WildflowerServer {
     private static final long OPTIMAL_TIME;
     private static boolean running;
     public static final int webSocketPushDelay;
-    public static final Map<Session, UUID> sessionsToBrowserSessionIds;
-    public static final Map<UUID, ViewportModel> browserSessionIdsToViewports;
+    public static final Map<Class<?>, List<Session>> sessionsByEndpoint;
+    public static final Map<Session, ClientModel> clientsBySession;
     public static final Gson gson;
 
     static {
@@ -46,23 +50,32 @@ public class WildflowerServer {
         OPTIMAL_TIME = ONE_SECOND / TARGET_FPS;
         running = false;
         webSocketPushDelay = 10;
-        sessionsToBrowserSessionIds = new ConcurrentHashMap<>();
-        browserSessionIdsToViewports = new ConcurrentHashMap<>();
+        clientsBySession = new ConcurrentHashMap<>();
+        sessionsByEndpoint = new ConcurrentHashMap<>();
         gson = new GsonBuilder()
                 .registerTypeAdapter(Vector2f.class, new Vector2fSerializer())
                 .registerTypeAdapter(Vector2f.class, new Vector2fDeserializer())
+                .registerTypeAdapter(UUID.class, new UuidSerializer())
+                .registerTypeAdapter(UUID.class, new UuidDeserializer())
                 .create();
     }
 
-    public static boolean tryIndexSession(String whichSocket, Session session, String message) {
-        if (!sessionsToBrowserSessionIds.containsKey(session)) {
-            UUID id = UUID.fromString(message);
-            sessionsToBrowserSessionIds.put(session, id);
-            System.out.printf("Associated %s session from %s with id %s%n",
-                    whichSocket, session.getRemoteAddress().getHostName(), id.toString());
+    public static boolean indexSession(Class<?> endpoint, Session session, String message) {
+        sessionsByEndpoint.putIfAbsent(endpoint, new LinkedList<>());
+        if (!clientsBySession.containsKey(session)) {
+            ClientModel clientModel = gson.fromJson(message, ClientModel.class);
+            clientsBySession.put(session, clientModel);
+            System.out.printf("Associated %s session from %s with client %s%n",
+                    endpoint.getSimpleName(), session.getRemoteAddress().getHostName(), clientModel.id.toString());
+            sessionsByEndpoint.get(endpoint).add(session);
             return true;
         }
         return false;
+    }
+
+    public static void clearSession(Class<?> endpoint, Session session) {
+        clientsBySession.remove(session);
+        sessionsByEndpoint.get(endpoint).remove(session);
     }
 
     public static void main(String[] args) {
@@ -70,6 +83,7 @@ public class WildflowerServer {
         // Start up World in its own Executor thread
         ExecutorService executor = Executors.newSingleThreadExecutor();
         executor.submit(() -> {
+
             String threadName = Thread.currentThread().getName();
             System.out.println("Startng world in " + threadName);
             running = true;
