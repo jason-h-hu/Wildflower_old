@@ -7,8 +7,7 @@ import org.joml.Vector2f;
 
 public interface CreatureApi {
     public void move(UUID id, Vector2f direction);
-    public Set<CreatureObservation> getSurroundingCreatures(UUID id);
-    public Vector2f getLocation(UUID id);
-    public UUID addCreature(Vector2f location);
-    public CreatureState getCreatureState(UUID id);
+    public Set<Creature> getSurroundingCreatures(UUID id);
+    public Creature addCreature(Vector2f location);
+    public Creature getCreature(UUID id);
 }

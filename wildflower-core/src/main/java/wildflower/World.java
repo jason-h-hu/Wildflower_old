@@ -1,8 +1,6 @@
 package wildflower;
 
 import wildflower.creature.Creature;
-import wildflower.creature.CreatureObservation;
-import wildflower.creature.CreatureState;
 import wildflower.creature.CreatureApi;
 import wildflower.geometry.Shape;
 
@@ -28,6 +26,50 @@ public class World implements CreatureApi {
         this.entities = new ConcurrentHashMap<>();
         this.creatures = new ConcurrentHashMap<>();
         running = false;
+    }
+
+    @Override
+    public Creature addCreature(Vector2f location) {
+        Creature creature = new Creature(location, System.nanoTime());
+        UUID id = creature.getID();
+        this.creatures.put(id, creature);
+        this.entities.put(id, creature);
+        return creature;
+    }
+
+    @Override
+    public Creature getCreature(UUID id) {
+        return this.creatures.get(id);
+    }
+
+    @Override
+    public Set<Creature> getSurroundingCreatures(UUID id) {
+        Set<Creature> observed = new HashSet<>();
+        Creature creature = this.creatures.get(id);
+        if (creature == null) {
+            return observed;
+        }
+        observed.addAll(this.getCreaturesInArea(creature.getVisionCone()));
+        observed.remove(creature);
+        return observed;
+    }
+
+    @Override
+    public void move(UUID id, Vector2f force) {
+        Creature creature = this.creatures.get(id);
+        if (creature != null) {
+            creature.applyForce(force);
+        }
+    }
+
+    public Collection<Entity> getEntities() {
+        return this.entities.values();
+    }
+
+
+    public void update(double delta) {
+        this.reapDeadCreatures();
+        this.updateEntities();
     }
 
     public void start() {
@@ -59,11 +101,7 @@ public class World implements CreatureApi {
         }
     }
 
-    public Collection<Entity> getEntities() {
-        return this.entities.values();
-    }
-
-    public void reapDeadCreatures() {
+    private void reapDeadCreatures() {
         this.creatures.values().forEach(creature -> {
             if (creature.isDead()) {
                 UUID id = creature.getID();
@@ -73,67 +111,13 @@ public class World implements CreatureApi {
         });
     }
 
-    public void updateEntities() {
+    private void updateEntities() {
         this.entities.values().forEach(Entity::update);
-    }
-
-    public void update(double delta) {
-        this.reapDeadCreatures();
-        this.updateEntities();
     }
 
     private Set<Creature> getCreaturesInArea(Shape area) {
         return this.creatures.values().stream()
             .filter(creature -> creature.getHitBox().isOverlapping(area))
             .collect(Collectors.toSet());
-    }
-
-    @Override
-    public void move(UUID id, Vector2f force) {
-        Creature creature = this.creatures.get(id);
-        if (creature != null) {
-            creature.applyForce(force);
-        }
-    }
-
-    @Override
-    public Set<CreatureObservation> getSurroundingCreatures(UUID id) {
-        Set<CreatureObservation> observed = new HashSet<>();
-        Creature creature = this.creatures.get(id);
-        if (creature == null) {
-            return observed;
-        }
-
-        Shape visionCone = creature.getVisionCone();
-        observed.addAll(this.getCreaturesInArea(visionCone));
-        observed.remove(creature);
-        return observed;
-    }
-
-    @Override
-    public Vector2f getLocation(UUID id) {
-        Creature creature = this.creatures.get(id);
-        if (creature == null) {
-            return null;
-        }
-        return creature.getLocation();
-    }
-
-    @Override
-    public UUID addCreature(Vector2f location) {
-        Creature creature = new Creature(location);
-        UUID id = creature.getID();
-        this.creatures.put(id, creature);
-        this.entities.put(id, creature);
-        return id;
-    }
-
-    @Override
-    public CreatureState getCreatureState(UUID id) {
-        Creature creature = this.creatures.get(id);
-        if (creature == null) {
-            return null;
-        }
-        return creature;
     }
 }

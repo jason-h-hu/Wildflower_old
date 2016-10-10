@@ -9,8 +9,8 @@ class CreatureApi(object):
   def __init__(self, path, location):
     super(CreatureApi, self).__init__()
     self.path = path
-    r = self.post_helper(self.path + '/creature', { 'location': location })
-    self.id = r.content
+    r = self.post_helper(self.path + '/creature', location)
+    self.id = r.json()['id']
 
   def get_helper(self, path):
     r = requests.get(path)
@@ -42,10 +42,8 @@ class Lupine(object):
   def run(self):
     while True:
       movement = {
-         'force': {
-              'x': -1 + random.random()*2,
-              'y': -1 + random.random()*2
-          }
+        'x': -1 + random.random()*2,
+        'y': -1 + random.random()*2
       }
       self.creature_api.post_movement(movement)
       time.sleep(0.5)

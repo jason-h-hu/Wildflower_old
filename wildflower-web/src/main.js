@@ -12,7 +12,6 @@ const store = createStore(reducer);
 var socket = new WebSocket(`ws://${location.hostname}:${location.port}/wildflower`);
 socket.onmessage = function(message) {
   store.dispatch(Action.addMessage(message));
-  console.log(message.data)
   store.dispatch(Action.setEntities(JSON.parse(message.data)));
 }
 

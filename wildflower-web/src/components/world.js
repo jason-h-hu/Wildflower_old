@@ -3,7 +3,7 @@ import { connect } from 'react-redux';
 
 export class World extends React.Component {
     render() {
-        const entities = this.props.entities.map(entity => <circle cx={entity.x} cy={entity.y} r="10"></circle>);
+        const entities = this.props.entities.map(entity => <circle cx={entity.location.x} cy={entity.location.y} r="10" />);
         const style = {width: "100%", height: "100%"};
         return <svg style={style}>{entities}</svg>;
     }
