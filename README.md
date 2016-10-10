@@ -1,6 +1,6 @@
 # Wildflower [![CircleCI](https://circleci.com/gh/jason-h-hu/Wildflower/tree/master.svg?style=shield)](https://circleci.com/gh/jason-h-hu/Wildflower/tree/master)
 
-Wildflower is a sandbox game about creatures. Creatures in wildflower are controlled by Agents, which are programs written by Wildflower players. Agents must interact with the Wildflower HTTP API in order to manipulate their Creature, and observe the Wildflower World through its eyes. It is composed of:
+Wildflower is a sandbox game about creatures. Creatures in wildflower are controlled by Agents, which are programs written by Wildflower players. Agents must interact with the [Wildflower HTTP API](https://github.com/jason-h-hu/Wildflower/wiki/Wildflower-HTTP-Api-for-Agents) in order to manipulate their Creature, and observe the Wildflower World through its eyes. It is composed of:
 
 ## Wildflower Core
 The Wildflower Core is a physical simulation of the mechanics of the Wildflower world. It manages Creatures and their physical interactions with their environment and each other.
