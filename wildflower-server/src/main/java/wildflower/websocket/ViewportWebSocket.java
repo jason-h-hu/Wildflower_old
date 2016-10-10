@@ -9,10 +9,10 @@ import wildflower.api.ViewportModel;
 
 import java.io.IOException;
 
+import static wildflower.WildflowerServer.clearSession;
 import static wildflower.WildflowerServer.gson;
-import static wildflower.WildflowerServer.sessionsToBrowserSessionIds;
-import static wildflower.WildflowerServer.browserSessionIdsToViewports;
-import static wildflower.WildflowerServer.tryIndexSession;
+import static wildflower.WildflowerServer.clientsBySession;
+import static wildflower.WildflowerServer.indexSession;
 
 @WebSocket
 public class ViewportWebSocket {
@@ -27,12 +27,12 @@ public class ViewportWebSocket {
     public void closed(Session session, int statusCode, String reason) {
         System.out.printf("%s closing session with %s: (%d) { %s }%n",
                 this.getClass().getSimpleName(), session.getRemoteAddress().getHostName(), statusCode, reason);
+        clearSession(EntityWebSocket.class, session);
     }
 
     @OnWebSocketMessage
     public void message(Session session, String message) {
-        if (tryIndexSession(this.getClass().getSimpleName(), session, message)) return;
-        ViewportModel viewportModel = gson.fromJson(message, ViewportModel.class);
-        browserSessionIdsToViewports.put(sessionsToBrowserSessionIds.get(session), viewportModel);
+        if (indexSession(ViewportWebSocket.class, session, message)) return;
+        clientsBySession.get(session).viewport = gson.fromJson(message, ViewportModel.class);
     }
 }

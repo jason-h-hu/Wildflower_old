@@ -15,13 +15,22 @@ const uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c)
   return v.toString(16);
 });
 
+const client = {
+    id: uuid,
+    viewport: {
+        upperLeft: { x: 0, y: 0 },
+        lowerRight: { x: 100, y: 100 }
+    }
+};
+
 var entitySocket = new WebSocket(`ws://${location.hostname}:${location.port}/entity`);
-entitySocket.onopen = function() { entitySocket.send(uuid); };
+entitySocket.onopen = function() { entitySocket.send(JSON.stringify(client)); };
 
 var viewportSocket = new WebSocket(`ws://${location.hostname}:${location.port}/viewport`);
-viewportSocket.onopen = function() { viewportSocket.send(uuid); };
+viewportSocket.onopen = function() { viewportSocket.send(JSON.stringify(client)); };
 
 entitySocket.onmessage = function(message) {
+  console.log(message);
   store.dispatch(Action.setEntities(JSON.parse(message.data)));
 }
 
