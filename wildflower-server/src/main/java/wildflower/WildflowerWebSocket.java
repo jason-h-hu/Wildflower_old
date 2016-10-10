@@ -2,11 +2,14 @@ package wildflower;
 
 import wildflower.api.EntityRenderingModel;
 
-import org.eclipse.jetty.websocket.api.*;
-import org.eclipse.jetty.websocket.api.annotations.*;
-import java.io.*;
-import java.util.*;
-import java.util.concurrent.*;
+import org.eclipse.jetty.websocket.api.Session;
+import org.eclipse.jetty.websocket.api.annotations.OnWebSocketClose;
+import org.eclipse.jetty.websocket.api.annotations.OnWebSocketConnect;
+import org.eclipse.jetty.websocket.api.annotations.OnWebSocketMessage;
+import org.eclipse.jetty.websocket.api.annotations.WebSocket;
+
+import java.io.IOException;
+import java.util.List;
 import java.util.stream.Collectors;
 
 import com.google.gson.Gson;
@@ -31,7 +34,7 @@ public class WildflowerWebSocket {
                 .map(EntityRenderingModel::new).collect(Collectors.toList());
             session.getRemote().sendString(gson.toJson(entitiesToRender));
             try {
-                Thread.sleep(WildflowerServer.tickMillis);
+                Thread.sleep(WildflowerServer.webSocketPushDelay);
             } catch (InterruptedException e) {}
         }
     }
