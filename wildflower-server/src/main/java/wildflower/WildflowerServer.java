@@ -54,12 +54,12 @@ public class WildflowerServer {
                 .create();
     }
 
-    public static boolean tryIndexSession(Session session, String message) {
+    public static boolean tryIndexSession(String whichSocket, Session session, String message) {
         if (!sessionsToBrowserSessionIds.containsKey(session)) {
             UUID id = UUID.fromString(message);
             sessionsToBrowserSessionIds.put(session, id);
-            System.out.printf("Associated WebSocket session on %s with id %s%n",
-                    session.getRemoteAddress().getHostName(), id.toString());
+            System.out.printf("Associated %s session from %s with id %s%n",
+                    whichSocket, session.getRemoteAddress().getHostName(), id.toString());
             return true;
         }
         return false;

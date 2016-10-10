@@ -4,8 +4,7 @@ import org.eclipse.jetty.websocket.api.annotations.OnWebSocketClose;
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketConnect;
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketMessage;
 import org.eclipse.jetty.websocket.api.annotations.WebSocket;
-import wildflower.WildflowerServer;
-import wildflower.api.EntityRenderingModel;
+import wildflower.api.RenderableEntityModel;
 
 import org.eclipse.jetty.websocket.api.Session;
 import wildflower.api.ViewportModel;
@@ -37,8 +36,8 @@ public class EntityWebSocket {
                     UUID browserSessionID = entry.getValue();
                     ViewportModel viewport = browserSessionIdsToViewports.get(browserSessionID);
                     if (session.isOpen()) {
-                        List<EntityRenderingModel> entitiesToRender = world.getEntities().stream()
-                                .map(EntityRenderingModel::new).collect(Collectors.toList());
+                        List<RenderableEntityModel> entitiesToRender = world.getEntities().stream()
+                                .map(RenderableEntityModel::new).collect(Collectors.toList());
                         try {
                             session.getRemote().sendString(gson.toJson(entitiesToRender));
                         } catch (IOException e) {
@@ -58,17 +57,17 @@ public class EntityWebSocket {
     @OnWebSocketConnect
     public void connected(Session session) throws IOException {
         System.out.printf("%s received connection from %s%n",
-                this.getClass().getName(), session.getRemoteAddress().getHostName());
+                this.getClass().getSimpleName(), session.getRemoteAddress().getHostName());
     }
 
     @OnWebSocketClose
     public void closed(Session session, int statusCode, String reason) {
         System.out.printf("%s closing session with %s: (%d) { %s }%n",
-                this.getClass().getName(), session.getRemoteAddress().getHostName(), statusCode, reason);
+                this.getClass().getSimpleName(), session.getRemoteAddress().getHostName(), statusCode, reason);
     }
 
     @OnWebSocketMessage
     public void message(Session session, String message) {
-        tryIndexSession(session, message);
+        tryIndexSession(this.getClass().getSimpleName(), session, message);
     }
 }

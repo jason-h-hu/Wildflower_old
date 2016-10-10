@@ -20,18 +20,18 @@ public class ViewportWebSocket {
     @OnWebSocketConnect
     public void connected(Session session) throws IOException {
         System.out.printf("%s received connection from %s%n",
-                this.getClass().getName(), session.getRemoteAddress().getHostName());
+                this.getClass().getSimpleName(), session.getRemoteAddress().getHostName());
     }
 
     @OnWebSocketClose
     public void closed(Session session, int statusCode, String reason) {
         System.out.printf("%s closing session with %s: (%d) { %s }%n",
-                this.getClass().getName(), session.getRemoteAddress().getHostName(), statusCode, reason);
+                this.getClass().getSimpleName(), session.getRemoteAddress().getHostName(), statusCode, reason);
     }
 
     @OnWebSocketMessage
     public void message(Session session, String message) {
-        if (tryIndexSession(session, message)) return;
+        if (tryIndexSession(this.getClass().getSimpleName(), session, message)) return;
         ViewportModel viewportModel = gson.fromJson(message, ViewportModel.class);
         browserSessionIdsToViewports.put(sessionsToBrowserSessionIds.get(session), viewportModel);
     }
