@@ -22,14 +22,10 @@ public class TerrainEngine {
 
     public TerrainEngine() {
         temperatureFunction = new CosineNoiseSampler()
-                .add().scaleHorizontal(100).scaleVertical(5)
-                .add().scaleHorizontal(5)
-                .normalize();
+                .add().scaleHorizontal(300);
 
         groundWaterFunction = new CosineNoiseSampler()
-                .add().scaleHorizontal(10).scaleVertical(5)
-                .add().scaleHorizontal(10)
-                .normalize();
+                .add().scaleHorizontal(50);
     }
 
     public Set<TerrainTile> getTerrainFor(AxisAlignedBox region) {
@@ -46,10 +42,11 @@ public class TerrainEngine {
         Set<TerrainTile> tiles = new HashSet<>();
         Vector2i index = new Vector2i(minXIndex, minYIndex);
         while(index.x <= maxXIndex) {
+            index.y = 0;
             while(index.y <= maxYIndex) {
                 if (!cache.containsKey(index)) {
                     Vector2i indexCopy = new Vector2i(index);
-                    TerrainType[][] terrain = new TerrainType[DIMENSION_X][DIMENSION_Y];
+                    TerrainSurface[][] terrain = new TerrainSurface[DIMENSION_X][DIMENSION_Y];
                     fillTile(terrain, indexCopy);
                     TerrainTile tile = new TerrainTile(indexCopy, terrain);
                     tiles.add(tile);
@@ -65,7 +62,7 @@ public class TerrainEngine {
         return tiles;
     }
 
-    private void fillTile(TerrainType[][] terrain, Vector2i index) {
+    private void fillTile(TerrainSurface[][] terrain, Vector2i index) {
         float[][] temperatureValues = new float[DIMENSION_X][DIMENSION_Y];
         float[][] groundWaterValues = new float[DIMENSION_X][DIMENSION_Y];
 
@@ -87,16 +84,16 @@ public class TerrainEngine {
         }
     }
 
-    private TerrainType mapFieldsToTerrainType(float temperature, float groundWater) {
+    private TerrainSurface mapFieldsToTerrainType(float temperature, float groundWater) {
         if (temperature > 0.5f && groundWater > 0.5f) {
-            return TerrainType.GRASS;
+            return TerrainSurface.GRASS;
         } else if (temperature > 0.5f && groundWater < 0.5f) {
-            return TerrainType.SAND;
+            return TerrainSurface.SAND;
         } else if (temperature < 0.5f && groundWater > 0.5f) {
-            return TerrainType.WATER;
+            return TerrainSurface.WATER;
         } else if (temperature < 0.5f && groundWater < 0.5f) {
-            return TerrainType.DIRT;
+            return TerrainSurface.DIRT;
         }
-        return TerrainType.DIRT;
+        return TerrainSurface.DIRT;
     }
 }

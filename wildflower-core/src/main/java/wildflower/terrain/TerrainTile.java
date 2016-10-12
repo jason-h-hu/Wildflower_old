@@ -8,9 +8,9 @@ public class TerrainTile {
     public static int GRID_GAP = 10;
 
     private Vector2i index;
-    private TerrainType[][] terrain;
+    private TerrainSurface[][] terrain;
 
-    public TerrainTile(Vector2i index, TerrainType[][] terrain) {
+    public TerrainTile(Vector2i index, TerrainSurface[][] terrain) {
         this.index = index;
         this.terrain = terrain;
     }
@@ -19,7 +19,7 @@ public class TerrainTile {
         return index;
     }
 
-    public TerrainType[][] getTerrain() {
+    public TerrainSurface[][] getTerrain() {
         return terrain;
     }
 }

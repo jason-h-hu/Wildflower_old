@@ -1,11 +1,11 @@
 package wildflower.terrain;
 
-public enum TerrainType {
+public enum TerrainSurface {
     SAND('s'), GRASS('g'), DIRT('d'), WATER('w');
 
     public char sigil;
 
-    TerrainType(char sigil) {
+    TerrainSurface(char sigil) {
         this.sigil = sigil;
     }
 }

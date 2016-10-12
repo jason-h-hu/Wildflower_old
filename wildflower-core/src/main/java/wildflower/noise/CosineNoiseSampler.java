@@ -5,6 +5,8 @@ import java.util.List;
 
 public class CosineNoiseSampler {
     private List<Operation> operations = new LinkedList<>();
+    private List<RandomGrid> addedGrids = new LinkedList<>();
+    private List<RandomGrid> multipliedGrids = new LinkedList<>();
     private float maxValue = 0;
     private float minValue = 0;
 
@@ -13,13 +15,6 @@ public class CosineNoiseSampler {
         TRUNCATE, SHIFT, LIMIT_ABOVE, LIMIT_BELOW, NORMALIZE;
 
         float scale;
-        RandomGrid grid;
-
-        Operation() {
-            if (this.name().equals("ADD") || this.name().equals("MULTIPLY")) {
-                grid = new RandomGrid();
-            }
-        }
 
         Operation by(float scale) {
             this.scale = scale;
@@ -28,7 +23,7 @@ public class CosineNoiseSampler {
     }
 
     public float sample(float x, float y) {
-        return sample(x, y, operations.size() - 1);
+        return sample(x, y, operations.size() - 1, 0, 0);
     }
 
     public void sample(float[][] result, float xMin, float xStep, int xCount, float yMin, float yStep, float yCount) {
@@ -41,42 +36,44 @@ public class CosineNoiseSampler {
         }
     }
 
-    private float sample(float x, float y, int operationIndex) {
-        if (operationIndex == -1) {
+    private float sample(float x, float y, int oIndex, int aIndex, int mIndex) {
+        if (oIndex == -1) {
             return 0;
         }
 
-        Operation operation = operations.get(operationIndex);
+        Operation operation = operations.get(oIndex);
         switch (operation) {
             case ADD:
                 maxValue++;
-                return operation.grid.interpolatedValueAt(x, y) + sample(x, y, --operationIndex);
+                return addedGrids.get(aIndex).interpolatedValueAt(x, y) + sample(x, y, --oIndex, ++aIndex, mIndex);
             case MULTIPLY:
-                return operation.grid.interpolatedValueAt(x, y) * sample(x, y, --operationIndex);
+                return multipliedGrids.get(mIndex).interpolatedValueAt(x, y) * sample(x, y, --oIndex, aIndex, ++mIndex);
             case SCALE_VERTICAL:
                 minValue *= operation.scale;
                 maxValue *= operation.scale;
-                return operation.scale * sample(x, y, --operationIndex);
+                return operation.scale * sample(x, y, --oIndex, aIndex, mIndex);
             case SCALE_HORIZONTAL:
-                return sample(x / operation.scale, y / operation.scale, --operationIndex);
+                return sample(x / operation.scale, y / operation.scale, --oIndex, aIndex, mIndex);
             case TRUNCATE:
                 minValue = (int) minValue;
                 maxValue = (int) maxValue;
-                return (int) sample(x, y, --operationIndex);
+                return (int) sample(x, y, --oIndex, aIndex, mIndex);
             case SHIFT:
                 minValue += operation.scale;
                 maxValue += operation.scale;
-                return operation.scale + sample(x, y, --operationIndex);
+                return operation.scale + sample(x, y, --oIndex, aIndex, mIndex);
             case LIMIT_BELOW:
                 minValue = Math.max(minValue, operation.scale);
-                return Math.max(operation.scale, sample(x, y, --operationIndex));
+                return Math.max(operation.scale, sample(x, y, --oIndex, aIndex, mIndex));
             case LIMIT_ABOVE:
                 maxValue = Math.min(maxValue, operation.scale);
-                return Math.min(operation.scale, sample(x, y, --operationIndex));
+                return Math.min(operation.scale, sample(x, y, --oIndex, aIndex, mIndex));
             case NORMALIZE:
+                float prevMinValue = minValue;
+                float prevMaxValue = maxValue;
                 minValue = 0;
                 maxValue = 1;
-                return map(sample(x, y, --operationIndex), minValue, maxValue, 0, 1);
+                return map(sample(x, y, --oIndex, aIndex, mIndex), prevMinValue, prevMaxValue, 0, 1);
         }
 
         throw new IllegalStateException("Should not be possible to get here!");
@@ -88,11 +85,13 @@ public class CosineNoiseSampler {
 
     public CosineNoiseSampler add() {
         operations.add(Operation.ADD);
+        addedGrids.add(new RandomGrid());
         return this;
     }
 
     public CosineNoiseSampler multiply() {
         operations.add(Operation.MULTIPLY);
+        multipliedGrids.add(new RandomGrid());
         return this;
     }
 
