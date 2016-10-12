@@ -9,6 +9,7 @@ import wildflower.gson.UuidSerializer;
 import wildflower.gson.Vector2fSerializer;
 import wildflower.gson.Vector2fDeserializer;
 import wildflower.websocket.EntityWebSocket;
+import wildflower.websocket.TerrainWebSocket;
 import wildflower.websocket.ViewportWebSocket;
 
 import com.google.gson.Gson;
@@ -78,47 +79,67 @@ public class WildflowerServer {
         sessionsByEndpoint.get(endpoint).remove(session);
     }
 
+    private static void runWorld() {
+        String threadName = Thread.currentThread().getName();
+        System.out.println("Startng world in " + threadName);
+        running = true;
+
+        double delta = 0;
+        long lastLoopTime = System.nanoTime();
+        long lastFpsTime = 0;
+        long now = lastLoopTime;
+        long updateLength = 0;
+        long framesPerSecond = 0;
+        int fps = 0;
+
+        while (running) {
+            now = System.nanoTime();
+            updateLength = now - lastLoopTime;
+            lastLoopTime = now;
+            delta = updateLength / ((double) OPTIMAL_TIME);
+            lastFpsTime += updateLength;
+            fps++;
+
+            if (lastFpsTime >= ONE_SECOND) {
+                framesPerSecond = fps;
+                lastFpsTime = 0;
+                fps = 0;
+            }
+
+            world.update(delta);
+
+            try {
+                Thread.sleep((lastLoopTime - System.nanoTime() + OPTIMAL_TIME) / ONE_MILLISECOND);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private static void runWebSockets() {
+        while (running) {
+            if (sessionsByEndpoint.containsKey(EntityWebSocket.class)) {
+                sessionsByEndpoint.get(EntityWebSocket.class).forEach(session -> EntityWebSocket.speakTo(session));
+            }
+
+            if (sessionsByEndpoint.containsKey(TerrainWebSocket.class)) {
+                sessionsByEndpoint.get(TerrainWebSocket.class).forEach(session -> TerrainWebSocket.speakTo(session));
+            }
+
+            try {
+                Thread.sleep(webSocketPushDelay);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
     public static void main(String[] args) {
 
         // Start up World in its own Executor thread
-        ExecutorService executor = Executors.newSingleThreadExecutor();
-        executor.submit(() -> {
-
-            String threadName = Thread.currentThread().getName();
-            System.out.println("Startng world in " + threadName);
-            running = true;
-
-            double delta = 0;
-            long lastLoopTime = System.nanoTime();
-            long lastFpsTime = 0;
-            long now = lastLoopTime;
-            long updateLength = 0;
-            long framesPerSecond = 0;
-            int fps = 0;
-
-            while (running) {
-                now = System.nanoTime();
-                updateLength = now - lastLoopTime;
-                lastLoopTime = now;
-                delta = updateLength / ((double) OPTIMAL_TIME);
-                lastFpsTime += updateLength;
-                fps++;
-
-                if (lastFpsTime >= ONE_SECOND) {
-                    framesPerSecond = fps;
-                    lastFpsTime = 0;
-                    fps = 0;
-                }
-
-                world.update(delta);
-
-                try {
-                    Thread.sleep((lastLoopTime - System.nanoTime() + OPTIMAL_TIME) / ONE_MILLISECOND);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-        });
+        ExecutorService executor = Executors.newCachedThreadPool();
+        executor.submit(WildflowerServer::runWorld);
+        executor.submit(WildflowerServer::runWebSockets);
 
         // Setup port, static file location, connect websocket endpoint
         port(9090);

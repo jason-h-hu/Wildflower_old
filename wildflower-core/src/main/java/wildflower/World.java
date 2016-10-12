@@ -1,5 +1,6 @@
 package wildflower;
 
+import wildflower.geometry.AxisAlignedBox;
 import wildflower.geometry.Shape;
 
 import java.util.UUID;
@@ -12,6 +13,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.joml.Vector2f;
 import wildflower.terrain.TerrainEngine;
+import wildflower.terrain.TerrainTile;
 
 public class World {
     private Map<UUID, Entity> entities;
@@ -30,6 +32,10 @@ public class World {
         this.creatures.put(id, creature);
         this.entities.put(id, creature);
         return creature;
+    }
+
+    public Set<TerrainTile> getTerrainFor(AxisAlignedBox region) {
+        return terrainEngine.getTerrainFor(region);
     }
 
     public Creature getCreature(UUID id) {

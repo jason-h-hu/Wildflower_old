@@ -51,7 +51,9 @@ public class TerrainEngine {
                     Vector2i indexCopy = new Vector2i(index);
                     TerrainType[][] terrain = new TerrainType[DIMENSION_X][DIMENSION_Y];
                     fillTile(terrain, indexCopy);
-                    tiles.add(new TerrainTile(indexCopy, terrain));
+                    TerrainTile tile = new TerrainTile(indexCopy, terrain);
+                    tiles.add(tile);
+                    cache.put(indexCopy, tile);
                 } else {
                     tiles.add(cache.get(index));
                 }
