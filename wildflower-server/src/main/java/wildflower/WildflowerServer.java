@@ -117,13 +117,16 @@ public class WildflowerServer {
     }
 
     private static void runWebSockets() {
+        String threadName = Thread.currentThread().getName();
+        System.out.println("Starting websocket streams in " + threadName);
+
         while (running) {
             if (sessionsByEndpoint.containsKey(EntityWebSocket.class)) {
-                sessionsByEndpoint.get(EntityWebSocket.class).forEach(session -> EntityWebSocket.speakTo(session));
+                sessionsByEndpoint.get(EntityWebSocket.class).forEach(EntityWebSocket::speakTo);
             }
 
             if (sessionsByEndpoint.containsKey(TerrainWebSocket.class)) {
-                sessionsByEndpoint.get(TerrainWebSocket.class).forEach(session -> TerrainWebSocket.speakTo(session));
+                sessionsByEndpoint.get(TerrainWebSocket.class).forEach(TerrainWebSocket::speakTo);
             }
 
             try {
