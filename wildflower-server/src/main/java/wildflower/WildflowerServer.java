@@ -41,6 +41,7 @@ public class WildflowerServer {
     public static final int webSocketPushDelay;
     public static final Map<Class<?>, List<Session>> sessionsByEndpoint;
     public static final Map<Session, ClientModel> clientsBySession;
+    public static final Map<UUID, ClientModel> clientsById;
     public static final Gson gson;
 
     static {
@@ -52,6 +53,7 @@ public class WildflowerServer {
         running = false;
         webSocketPushDelay = 10;
         clientsBySession = new ConcurrentHashMap<>();
+        clientsById = new ConcurrentHashMap<>();
         sessionsByEndpoint = new ConcurrentHashMap<>();
         gson = new GsonBuilder()
                 .registerTypeAdapter(Vector2f.class, new Vector2fSerializer())
@@ -64,10 +66,15 @@ public class WildflowerServer {
     public static boolean indexSession(Class<?> endpoint, Session session, String message) {
         sessionsByEndpoint.putIfAbsent(endpoint, new LinkedList<>());
         if (!clientsBySession.containsKey(session)) {
-            ClientModel clientModel = gson.fromJson(message, ClientModel.class);
-            clientsBySession.put(session, clientModel);
+            ClientModel tempClientModel = gson.fromJson(message, ClientModel.class);
+
+            // Only index a new client model if we have not seen this ID before
+            // No two client models should be in clientsBySession with the same ID
+            clientsById.putIfAbsent(tempClientModel.id, tempClientModel);
+            clientsBySession.put(session, clientsById.get(tempClientModel.id));
+
             System.out.printf("Associated %s session from %s with client %s%n",
-                    endpoint.getSimpleName(), session.getRemoteAddress().getHostName(), clientModel.id.toString());
+                    endpoint.getSimpleName(), session.getRemoteAddress().getHostName(), tempClientModel.id.toString());
             sessionsByEndpoint.get(endpoint).add(session);
             return true;
         }

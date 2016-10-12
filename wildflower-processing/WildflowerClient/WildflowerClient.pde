@@ -33,15 +33,18 @@ Type entityCollectionType = new TypeToken<Collection<RenderableEntityModel>>(){}
 Type terrainTileCollectionType = new TypeToken<Collection<TerrainTileModel>>(){}.getType();
 boolean lock = false;
 
+PVector upperLeft = new PVector(0, 0);
+PVector lowerRight = new PVector(600, 600);
+
 void setup() {
-   size(800, 1000);
+   size(600, 600);
    //entityClient = new WebsocketClient(this, "ws://localhost:9090/entity");
    viewportClient = new WebsocketClient(this, "ws://localhost:9090/viewport");
    terrainClient = new WebsocketClient(this, "ws://localhost:9090/terrain");
    
    ViewportModel viewport = new ViewportModel();
-   viewport.upperLeft = new PVector(0, 0);
-   viewport.lowerRight = new PVector(800, 1000);
+   viewport.upperLeft = upperLeft;
+   viewport.lowerRight = lowerRight;
    
    ClientModel client = new ClientModel();
    client.viewport = viewport;
@@ -64,28 +67,51 @@ void draw() {
     stroke(0);
     strokeWeight(3);
     noFill();
-    rect(tile.index.x * tileWidth, tile.index.y * tileHeight, tileWidth, tileHeight);
+    //rect(tile.index.x * tileWidth - upperLeft.x, tile.index.y * tileHeight - upperLeft.y, tileWidth, tileHeight);
     for (int x = 0; x < tile.xCount; x++) {
      for (int y = 0; y < tile.yCount; y++) {
        char terrainSurface = (char) tile.terrain[x][y];
        switch (terrainSurface) {
          case 's':
-           fill(100, 60, 0, 100); break;
+           fill(200, 100, 0); break;
          case 'g':
-           fill(10, 100, 10, 100); break;
+           fill(10, 100, 10); break;
          case 'd':
-           fill(100, 30, 0, 100); break;
+           fill(100, 30, 0); break;
          case 'w':
-           fill(10, 10, 100, 100); break;
+           fill(10, 10, 100); break;
        }
        noStroke();
-       ellipse((tileWidth * tile.index.x) + (x * tile.gap), (tileHeight * tile.index.y) + (y * tile.gap), tile.gap * 2, tile.gap * 2);
+       rect((tileWidth * tile.index.x) + (x * tile.gap) - upperLeft.x, (tileHeight * tile.index.y) + (y * tile.gap) - upperLeft.y, tile.gap, tile.gap);
      }
     }
   }
   
   for (RenderableEntityModel entity : renderableEntities) {
     ellipse(entity.location.x, entity.location.y, 10, 10); 
+  }
+}
+
+void keyPressed() {
+  ViewportModel viewport = new ViewportModel();
+  viewport.upperLeft = upperLeft;
+  viewport.lowerRight = lowerRight;
+  
+  if (key == CODED) {
+    if (keyCode == UP)  {
+      viewport.upperLeft.y -= 10;
+      viewport.lowerRight.y -= 10;
+    } else if (keyCode == DOWN) {
+      viewport.upperLeft.y += 10;
+      viewport.lowerRight.y += 10;
+    } else if (keyCode == LEFT) {
+      viewport.upperLeft.x -= 10;
+      viewport.lowerRight.x -= 10;
+    } else if (keyCode == RIGHT) {
+      viewport.upperLeft.x += 10;
+      viewport.lowerRight.x += 10;
+    }
+    viewportClient.sendMessage(gson.toJson(viewport));
   }
 }
 

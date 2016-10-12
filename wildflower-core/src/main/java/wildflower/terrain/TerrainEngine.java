@@ -22,10 +22,10 @@ public class TerrainEngine {
 
     public TerrainEngine() {
         temperatureFunction = new CosineNoiseSampler()
-                .add().scaleHorizontal(300);
+                .add().scaleHorizontal(500);
 
         groundWaterFunction = new CosineNoiseSampler()
-                .add().scaleHorizontal(50);
+                .add().scaleHorizontal(100);
     }
 
     public Set<TerrainTile> getTerrainFor(AxisAlignedBox region) {
@@ -36,13 +36,13 @@ public class TerrainEngine {
 
         int maxXIndex = (int) (region.getLowerRight().x / terrainTileSideLengthX);
         int maxYIndex = (int) (region.getLowerRight().y / terrainTileSideLengthY);
-        if (region.getLowerRight().x < 0) minXIndex--;
-        if (region.getLowerRight().y < 0) minYIndex--;
+        if (region.getLowerRight().x < 0) maxXIndex--;
+        if (region.getLowerRight().y < 0) maxYIndex--;
 
         Set<TerrainTile> tiles = new HashSet<>();
         Vector2i index = new Vector2i(minXIndex, minYIndex);
         while(index.x <= maxXIndex) {
-            index.y = 0;
+            index.y = minYIndex;
             while(index.y <= maxYIndex) {
                 if (!cache.containsKey(index)) {
                     Vector2i indexCopy = new Vector2i(index);
