@@ -1,7 +1,6 @@
 package wildflower;
 
-import wildflower.creature.Creature;
-import wildflower.creature.CreatureApi;
+import wildflower.geometry.AxisAlignedBox;
 import wildflower.geometry.Shape;
 
 import java.util.UUID;
@@ -13,17 +12,20 @@ import java.util.stream.Collectors;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.joml.Vector2f;
+import wildflower.terrain.TerrainEngine;
+import wildflower.terrain.TerrainTile;
 
-public class World implements CreatureApi {
+public class World {
     private Map<UUID, Entity> entities;
     private Map<UUID, Creature> creatures;
+    private TerrainEngine terrainEngine;
 
     public World() {
         this.entities = new ConcurrentHashMap<>();
         this.creatures = new ConcurrentHashMap<>();
+        this.terrainEngine = new TerrainEngine();
     }
 
-    @Override
     public Creature addCreature(Vector2f location) {
         Creature creature = new Creature(location, System.nanoTime());
         UUID id = creature.getID();
@@ -32,12 +34,14 @@ public class World implements CreatureApi {
         return creature;
     }
 
-    @Override
+    public Set<TerrainTile> getTerrainFor(AxisAlignedBox region) {
+        return terrainEngine.getTerrainFor(region);
+    }
+
     public Creature getCreature(UUID id) {
         return this.creatures.get(id);
     }
 
-    @Override
     public Set<Creature> getSurroundingCreatures(UUID id) {
         Set<Creature> observed = new HashSet<>();
         Creature creature = this.creatures.get(id);
@@ -49,7 +53,6 @@ public class World implements CreatureApi {
         return observed;
     }
 
-    @Override
     public void move(UUID id, Vector2f force) {
         Creature creature = this.creatures.get(id);
         if (creature != null) {

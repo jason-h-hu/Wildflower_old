@@ -9,6 +9,7 @@ import wildflower.gson.UuidSerializer;
 import wildflower.gson.Vector2fSerializer;
 import wildflower.gson.Vector2fDeserializer;
 import wildflower.websocket.EntityWebSocket;
+import wildflower.websocket.TerrainWebSocket;
 import wildflower.websocket.ViewportWebSocket;
 
 import com.google.gson.Gson;
@@ -40,6 +41,7 @@ public class WildflowerServer {
     public static final int webSocketPushDelay;
     public static final Map<Class<?>, List<Session>> sessionsByEndpoint;
     public static final Map<Session, ClientModel> clientsBySession;
+    public static final Map<UUID, ClientModel> clientsById;
     public static final Gson gson;
 
     static {
@@ -51,6 +53,7 @@ public class WildflowerServer {
         running = false;
         webSocketPushDelay = 10;
         clientsBySession = new ConcurrentHashMap<>();
+        clientsById = new ConcurrentHashMap<>();
         sessionsByEndpoint = new ConcurrentHashMap<>();
         gson = new GsonBuilder()
                 .registerTypeAdapter(Vector2f.class, new Vector2fSerializer())
@@ -63,10 +66,15 @@ public class WildflowerServer {
     public static boolean indexSession(Class<?> endpoint, Session session, String message) {
         sessionsByEndpoint.putIfAbsent(endpoint, new LinkedList<>());
         if (!clientsBySession.containsKey(session)) {
-            ClientModel clientModel = gson.fromJson(message, ClientModel.class);
-            clientsBySession.put(session, clientModel);
+            ClientModel tempClientModel = gson.fromJson(message, ClientModel.class);
+
+            // Only index a new client model if we have not seen this ID before
+            // No two client models should be in clientsBySession with the same ID
+            clientsById.putIfAbsent(tempClientModel.id, tempClientModel);
+            clientsBySession.put(session, clientsById.get(tempClientModel.id));
+
             System.out.printf("Associated %s session from %s with client %s%n",
-                    endpoint.getSimpleName(), session.getRemoteAddress().getHostName(), clientModel.id.toString());
+                    endpoint.getSimpleName(), session.getRemoteAddress().getHostName(), tempClientModel.id.toString());
             sessionsByEndpoint.get(endpoint).add(session);
             return true;
         }
@@ -78,55 +86,74 @@ public class WildflowerServer {
         sessionsByEndpoint.get(endpoint).remove(session);
     }
 
+    private static void runWorld() {
+        String threadName = Thread.currentThread().getName();
+        System.out.println("Startng world in " + threadName);
+        running = true;
+
+        double delta = 0;
+        long lastLoopTime = System.nanoTime();
+        long lastFpsTime = 0;
+        long now = lastLoopTime;
+        long updateLength = 0;
+        long framesPerSecond = 0;
+        int fps = 0;
+
+        while (running) {
+            now = System.nanoTime();
+            updateLength = now - lastLoopTime;
+            lastLoopTime = now;
+            delta = updateLength / ((double) OPTIMAL_TIME);
+            lastFpsTime += updateLength;
+            fps++;
+
+            if (lastFpsTime >= ONE_SECOND) {
+                framesPerSecond = fps;
+                lastFpsTime = 0;
+                fps = 0;
+            }
+
+            world.update(delta);
+
+            try {
+                Thread.sleep((lastLoopTime - System.nanoTime() + OPTIMAL_TIME) / ONE_MILLISECOND);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private static void runWebSockets() {
+        String threadName = Thread.currentThread().getName();
+        System.out.println("Starting websocket streams in " + threadName);
+
+        while (running) {
+            if (sessionsByEndpoint.containsKey(EntityWebSocket.class)) {
+                sessionsByEndpoint.get(EntityWebSocket.class).forEach(EntityWebSocket::speakTo);
+            }
+
+            if (sessionsByEndpoint.containsKey(TerrainWebSocket.class)) {
+                sessionsByEndpoint.get(TerrainWebSocket.class).forEach(TerrainWebSocket::speakTo);
+            }
+
+            try {
+                Thread.sleep(webSocketPushDelay);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
     public static void main(String[] args) {
 
-        // Start up World in its own Executor thread
-        ExecutorService executor = Executors.newSingleThreadExecutor();
-        executor.submit(() -> {
-
-            String threadName = Thread.currentThread().getName();
-            System.out.println("Startng world in " + threadName);
-            running = true;
-
-            double delta = 0;
-            long lastLoopTime = System.nanoTime();
-            long lastFpsTime = 0;
-            long now = lastLoopTime;
-            long updateLength = 0;
-            long framesPerSecond = 0;
-            int fps = 0;
-
-            while (running) {
-                now = System.nanoTime();
-                updateLength = now - lastLoopTime;
-                lastLoopTime = now;
-                delta = updateLength / ((double) OPTIMAL_TIME);
-                lastFpsTime += updateLength;
-                fps++;
-
-                if (lastFpsTime >= ONE_SECOND) {
-                    framesPerSecond = fps;
-                    lastFpsTime = 0;
-                    fps = 0;
-                }
-
-                world.update(delta);
-
-                try {
-                    Thread.sleep((lastLoopTime - System.nanoTime() + OPTIMAL_TIME) / ONE_MILLISECOND);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-        });
-
-        // Setup port, static file location, connect websocket endpoint
+        // Setup port, static file location
         port(9090);
         staticFiles.location("/public");
 
         // Setup web socket endpoints
         webSocket("/entity", EntityWebSocket.class);
         webSocket("/viewport", ViewportWebSocket.class);
+        webSocket("/terrain", TerrainWebSocket.class);
 
         // (PUBLIC) request new creature at location
         post("api/v0/creature", (request, response) -> {
@@ -148,5 +175,10 @@ public class WildflowerServer {
             world.move(UUID.fromString(request.params("id")), gson.fromJson(request.body(), Vector2f.class));
             return "";
         }, gson::toJson);
+
+        // Kick things off!
+        ExecutorService executor = Executors.newCachedThreadPool();
+        executor.submit(WildflowerServer::runWorld);
+        executor.submit(WildflowerServer::runWebSockets);
     }
 }

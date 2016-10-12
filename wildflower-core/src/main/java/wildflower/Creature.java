@@ -1,6 +1,5 @@
-package wildflower.creature;
+package wildflower;
 
-import wildflower.Entity;
 import wildflower.geometry.Shape;
 import wildflower.geometry.Circle;
 

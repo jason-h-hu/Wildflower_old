@@ -37,7 +37,7 @@ class Lupine(object):
   """docstring for Lupine"""
   def __init__(self):
     super(Lupine, self).__init__()
-    self.creature_api = CreatureApi('http://localhost:9090/api/v0', { 'x': 500, 'y': 500 })
+    self.creature_api = CreatureApi('http://52.33.99.207:9999/api/v0', { 'x': 500, 'y': 500 })
 
   def run(self):
     while True:

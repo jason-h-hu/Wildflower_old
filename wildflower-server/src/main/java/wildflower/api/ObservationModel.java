@@ -1,6 +1,6 @@
 package wildflower.api;
 
-import wildflower.creature.Creature;
+import wildflower.Creature;
 
 import java.util.stream.Collectors;
 import java.util.Set;
