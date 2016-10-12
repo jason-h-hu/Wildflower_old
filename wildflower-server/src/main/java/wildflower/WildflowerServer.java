@@ -139,18 +139,14 @@ public class WildflowerServer {
 
     public static void main(String[] args) {
 
-        // Start up World in its own Executor thread
-        ExecutorService executor = Executors.newCachedThreadPool();
-        executor.submit(WildflowerServer::runWorld);
-        executor.submit(WildflowerServer::runWebSockets);
-
-        // Setup port, static file location, connect websocket endpoint
+        // Setup port, static file location
         port(9090);
         staticFiles.location("/public");
 
         // Setup web socket endpoints
         webSocket("/entity", EntityWebSocket.class);
         webSocket("/viewport", ViewportWebSocket.class);
+        webSocket("/terrain", TerrainWebSocket.class);
 
         // (PUBLIC) request new creature at location
         post("api/v0/creature", (request, response) -> {
@@ -172,5 +168,10 @@ public class WildflowerServer {
             world.move(UUID.fromString(request.params("id")), gson.fromJson(request.body(), Vector2f.class));
             return "";
         }, gson::toJson);
+
+        // Kick things off!
+        ExecutorService executor = Executors.newCachedThreadPool();
+        executor.submit(WildflowerServer::runWorld);
+        executor.submit(WildflowerServer::runWebSockets);
     }
 }
