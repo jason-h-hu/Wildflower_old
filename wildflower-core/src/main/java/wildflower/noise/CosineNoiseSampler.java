@@ -4,21 +4,30 @@ import java.util.LinkedList;
 import java.util.List;
 
 public class CosineNoiseSampler {
-    private List<Operation> operations = new LinkedList<>();
-    private List<RandomGrid> addedGrids = new LinkedList<>();
-    private List<RandomGrid> multipliedGrids = new LinkedList<>();
+    private List<OperationItem> operations = new LinkedList<>();
     private float maxValue = 0;
     private float minValue = 0;
 
     private enum Operation {
         ADD, MULTIPLY, SCALE_VERTICAL, SCALE_HORIZONTAL,
-        TRUNCATE, SHIFT, LIMIT_ABOVE, LIMIT_BELOW, NORMALIZE;
+        TRUNCATE, SHIFT, LIMIT_ABOVE, LIMIT_BELOW, NORMALIZE
+    }
 
+    private class OperationItem {
         float scale;
+        RandomGrid grid;
+        Operation operation;
 
-        Operation by(float scale) {
+        OperationItem(Operation operation, float scale) {
+            this.operation = operation;
             this.scale = scale;
-            return this;
+            if (operation == Operation.ADD || operation == Operation.MULTIPLY) {
+                this.grid = new RandomGrid();
+            }
+        }
+
+        OperationItem(Operation operation) {
+            this(operation, 0);
         }
     }
 
@@ -41,33 +50,33 @@ public class CosineNoiseSampler {
             return 0;
         }
 
-        Operation operation = operations.get(oIndex);
-        switch (operation) {
+        OperationItem operationItem = operations.get(oIndex);
+        switch (operationItem.operation) {
             case ADD:
                 maxValue++;
-                return addedGrids.get(aIndex).interpolatedValueAt(x, y) + sample(x, y, --oIndex, ++aIndex, mIndex);
+                return operationItem.grid.interpolatedValueAt(x, y) + sample(x, y, --oIndex, ++aIndex, mIndex);
             case MULTIPLY:
-                return multipliedGrids.get(mIndex).interpolatedValueAt(x, y) * sample(x, y, --oIndex, aIndex, ++mIndex);
+                return operationItem.grid.interpolatedValueAt(x, y) * sample(x, y, --oIndex, aIndex, ++mIndex);
             case SCALE_VERTICAL:
-                minValue *= operation.scale;
-                maxValue *= operation.scale;
-                return operation.scale * sample(x, y, --oIndex, aIndex, mIndex);
+                minValue *= operationItem.scale;
+                maxValue *= operationItem.scale;
+                return operationItem.scale * sample(x, y, --oIndex, aIndex, mIndex);
             case SCALE_HORIZONTAL:
-                return sample(x / operation.scale, y / operation.scale, --oIndex, aIndex, mIndex);
+                return sample(x / operationItem.scale, y / operationItem.scale, --oIndex, aIndex, mIndex);
             case TRUNCATE:
                 minValue = (int) minValue;
                 maxValue = (int) maxValue;
                 return (int) sample(x, y, --oIndex, aIndex, mIndex);
             case SHIFT:
-                minValue += operation.scale;
-                maxValue += operation.scale;
-                return operation.scale + sample(x, y, --oIndex, aIndex, mIndex);
+                minValue += operationItem.scale;
+                maxValue += operationItem.scale;
+                return operationItem.scale + sample(x, y, --oIndex, aIndex, mIndex);
             case LIMIT_BELOW:
-                minValue = Math.max(minValue, operation.scale);
-                return Math.max(operation.scale, sample(x, y, --oIndex, aIndex, mIndex));
+                minValue = Math.max(minValue, operationItem.scale);
+                return Math.max(operationItem.scale, sample(x, y, --oIndex, aIndex, mIndex));
             case LIMIT_ABOVE:
-                maxValue = Math.min(maxValue, operation.scale);
-                return Math.min(operation.scale, sample(x, y, --oIndex, aIndex, mIndex));
+                maxValue = Math.min(maxValue, operationItem.scale);
+                return Math.min(operationItem.scale, sample(x, y, --oIndex, aIndex, mIndex));
             case NORMALIZE:
                 float prevMinValue = minValue;
                 float prevMaxValue = maxValue;
@@ -84,49 +93,47 @@ public class CosineNoiseSampler {
     }
 
     public CosineNoiseSampler add() {
-        operations.add(Operation.ADD);
-        addedGrids.add(new RandomGrid());
+        operations.add(new OperationItem(Operation.ADD));
         return this;
     }
 
     public CosineNoiseSampler multiply() {
-        operations.add(Operation.MULTIPLY);
-        multipliedGrids.add(new RandomGrid());
+        operations.add(new OperationItem(Operation.MULTIPLY));
         return this;
     }
 
     public CosineNoiseSampler scaleHorizontal(float amount) {
-        operations.add(Operation.SCALE_HORIZONTAL.by(amount));
+        operations.add(new OperationItem(Operation.SCALE_HORIZONTAL, amount));
         return this;
     }
 
     public CosineNoiseSampler scaleVertical(float amount) {
-        operations.add(Operation.SCALE_VERTICAL.by(amount));
+        operations.add(new OperationItem(Operation.SCALE_VERTICAL, amount));
         return this;
     }
 
     public CosineNoiseSampler shift(float amount) {
-        operations.add(Operation.SHIFT.by(amount));
+        operations.add(new OperationItem(Operation.SHIFT, amount));
         return this;
     }
 
     public CosineNoiseSampler limitAbove(float amount) {
-        operations.add(Operation.LIMIT_ABOVE.by(amount));
+        operations.add(new OperationItem(Operation.LIMIT_ABOVE, amount));
         return this;
     }
 
     public CosineNoiseSampler limitBelow(float amount) {
-        operations.add(Operation.LIMIT_BELOW.by(amount));
+        operations.add(new OperationItem(Operation.LIMIT_BELOW, amount));
         return this;
     }
 
     public CosineNoiseSampler truncate() {
-        operations.add(Operation.TRUNCATE);
+        operations.add(new OperationItem(Operation.TRUNCATE));
         return this;
     }
 
     public CosineNoiseSampler normalize() {
-        operations.add(Operation.NORMALIZE);
+        operations.add(new OperationItem(Operation.NORMALIZE));
         return this;
     }
 }

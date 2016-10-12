@@ -22,10 +22,10 @@ public class TerrainEngine {
 
     public TerrainEngine() {
         temperatureFunction = new CosineNoiseSampler()
-                .add().scaleHorizontal(500);
+                .add().scaleHorizontal(100);
 
         groundWaterFunction = new CosineNoiseSampler()
-                .add().scaleHorizontal(100);
+                .add().scaleHorizontal(30);
     }
 
     public Set<TerrainTile> getTerrainFor(AxisAlignedBox region) {
