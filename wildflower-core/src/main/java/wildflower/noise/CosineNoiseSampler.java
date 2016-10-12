@@ -32,7 +32,7 @@ public class CosineNoiseSampler {
     }
 
     public float sample(float x, float y) {
-        return sample(x, y, operations.size() - 1, 0, 0);
+        return sample(x, y, operations.size() - 1);
     }
 
     public void sample(float[][] result, float xMin, float xStep, int xCount, float yMin, float yStep, float yCount) {
@@ -45,7 +45,7 @@ public class CosineNoiseSampler {
         }
     }
 
-    private float sample(float x, float y, int oIndex, int aIndex, int mIndex) {
+    private float sample(float x, float y, int oIndex) {
         if (oIndex == -1) {
             return 0;
         }
@@ -54,35 +54,35 @@ public class CosineNoiseSampler {
         switch (operationItem.operation) {
             case ADD:
                 maxValue++;
-                return operationItem.grid.interpolatedValueAt(x, y) + sample(x, y, --oIndex, ++aIndex, mIndex);
+                return operationItem.grid.interpolatedValueAt(x, y) + sample(x, y, --oIndex);
             case MULTIPLY:
-                return operationItem.grid.interpolatedValueAt(x, y) * sample(x, y, --oIndex, aIndex, ++mIndex);
+                return operationItem.grid.interpolatedValueAt(x, y) * sample(x, y, --oIndex);
             case SCALE_VERTICAL:
                 minValue *= operationItem.scale;
                 maxValue *= operationItem.scale;
-                return operationItem.scale * sample(x, y, --oIndex, aIndex, mIndex);
+                return operationItem.scale * sample(x, y, --oIndex);
             case SCALE_HORIZONTAL:
-                return sample(x / operationItem.scale, y / operationItem.scale, --oIndex, aIndex, mIndex);
+                return sample(x / operationItem.scale, y / operationItem.scale, --oIndex);
             case TRUNCATE:
                 minValue = (int) minValue;
                 maxValue = (int) maxValue;
-                return (int) sample(x, y, --oIndex, aIndex, mIndex);
+                return (int) sample(x, y, --oIndex);
             case SHIFT:
                 minValue += operationItem.scale;
                 maxValue += operationItem.scale;
-                return operationItem.scale + sample(x, y, --oIndex, aIndex, mIndex);
+                return operationItem.scale + sample(x, y, --oIndex);
             case LIMIT_BELOW:
                 minValue = Math.max(minValue, operationItem.scale);
-                return Math.max(operationItem.scale, sample(x, y, --oIndex, aIndex, mIndex));
+                return Math.max(operationItem.scale, sample(x, y, --oIndex));
             case LIMIT_ABOVE:
                 maxValue = Math.min(maxValue, operationItem.scale);
-                return Math.min(operationItem.scale, sample(x, y, --oIndex, aIndex, mIndex));
+                return Math.min(operationItem.scale, sample(x, y, --oIndex));
             case NORMALIZE:
                 float prevMinValue = minValue;
                 float prevMaxValue = maxValue;
                 minValue = 0;
                 maxValue = 1;
-                return map(sample(x, y, --oIndex, aIndex, mIndex), prevMinValue, prevMaxValue, 0, 1);
+                return map(sample(x, y, --oIndex), prevMinValue, prevMaxValue, 0, 1);
         }
 
         throw new IllegalStateException("Should not be possible to get here!");
