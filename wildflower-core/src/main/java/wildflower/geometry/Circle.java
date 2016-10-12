@@ -2,6 +2,8 @@ package wildflower.geometry;
 
 import org.joml.Vector2f;
 
+import static wildflower.geometry.Geometry.clamp;
+
 public class Circle implements Shape {
     private Vector2f center;
     private float radius;
@@ -25,9 +27,18 @@ public class Circle implements Shape {
     }
 
     @Override
-    public boolean isOverlappingCircle(Circle other) {
-        float centerDistance = this.center.distance(other.getCenter());
-        float sumOfRadii = this.radius + other.getRadius();
+    public boolean isOverlappingCircle(Circle circle) {
+        float centerDistance = this.center.distance(circle.getCenter());
+        float sumOfRadii = this.radius + circle.getRadius();
         return centerDistance < sumOfRadii;
+    }
+
+    @Override
+    public boolean isOverlappingAxisAlignedBox(AxisAlignedBox axisAlignedBox) {
+        return axisAlignedBox.containsPoint(center) ||
+                clamp(new Vector2f(center),
+                        axisAlignedBox.getUpperLeft(),
+                        axisAlignedBox.getLowerRight()
+                ).distance(center) < radius;
     }
 }

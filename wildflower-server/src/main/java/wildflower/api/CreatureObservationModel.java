@@ -1,6 +1,6 @@
 package wildflower.api;
 
-import wildflower.creature.Creature;
+import wildflower.Creature;
 
 import org.joml.Vector2f;
 
