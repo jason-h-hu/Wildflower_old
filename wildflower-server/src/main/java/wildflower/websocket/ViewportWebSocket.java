@@ -34,5 +34,6 @@ public class ViewportWebSocket {
     public void message(Session session, String message) {
         if (indexSession(ViewportWebSocket.class, session, message)) return;
         clientsBySession.get(session).viewport = gson.fromJson(message, ViewportModel.class);
+        clientsBySession.get(session).state.needsNewTerrain = true;
     }
 }

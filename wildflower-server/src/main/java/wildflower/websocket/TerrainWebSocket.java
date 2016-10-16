@@ -23,17 +23,20 @@ import static wildflower.WildflowerServer.world;
 public class TerrainWebSocket {
     public static void speakTo(Session session) {
         ClientModel client = clientsBySession.get(session);
-        //TODO: only send new terrain if client has updated position
-
-        if (session.isOpen()) {
+        if (session.isOpen() && client.state.needsNewTerrain) {
             AxisAlignedBox region = new AxisAlignedBox(client.viewport.upperLeft, client.viewport.lowerRight);
             Set<TerrainTileModel> terrainTileModels = world.getTerrainFor(region).stream()
                     .map(TerrainTileModel::new).collect(Collectors.toSet());
             try {
-                session.getRemote().sendString(gson.toJson(terrainTileModels));
+                session.getRemote().sendString("");
+                for (TerrainTileModel terrainTileModel : terrainTileModels) {
+                    session.getRemote().sendString(gson.toJson(terrainTileModel));
+                }
             } catch (IOException e) {
                 e.printStackTrace();
             }
+
+            client.state.needsNewTerrain = false;
         }
     }
 
