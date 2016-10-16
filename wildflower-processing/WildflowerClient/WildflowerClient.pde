@@ -29,8 +29,6 @@ WebsocketClient terrainClient;
 
 Set<RenderableEntityModel> renderableEntities = new ConcurrentSkipListSet<RenderableEntityModel>();
 Set<TerrainTileModel> terrainTiles = new ConcurrentSkipListSet<TerrainTileModel>();
-Type entityCollectionType = new TypeToken<Collection<RenderableEntityModel>>(){}.getType();
-Type terrainTileCollectionType = new TypeToken<Collection<TerrainTileModel>>(){}.getType();
 boolean lock = false;
 
 PVector upperLeft = new PVector(0, 0);
@@ -67,7 +65,7 @@ void draw() {
     stroke(0);
     strokeWeight(3);
     noFill();
-    //rect(tile.index.x * tileWidth - upperLeft.x, tile.index.y * tileHeight - upperLeft.y, tileWidth, tileHeight);
+    rect(tile.index.x * tileWidth - upperLeft.x, tile.index.y * tileHeight - upperLeft.y, tileWidth, tileHeight);
     for (int x = 0; x < tile.xCount; x++) {
      for (int y = 0; y < tile.yCount; y++) {
        char terrainSurface = (char) tile.terrain[x][y];
@@ -116,7 +114,9 @@ void keyPressed() {
 }
 
 void webSocketEvent(String message) {
-  Collection<TerrainTileModel> tiles = gson.fromJson(message, terrainTileCollectionType);
-  terrainTiles.clear();
-  terrainTiles.addAll(tiles);
+  if (message.length() == 0) {
+    terrainTiles.clear();
+    return;
+  }
+  terrainTiles.add(gson.fromJson(message, TerrainTileModel.class));
 }

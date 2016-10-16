@@ -29,7 +29,10 @@ public class EntityWebSocket {
             List<RenderableEntityModel> entitiesToRender = world.getEntities().stream()
                     .map(RenderableEntityModel::new).collect(Collectors.toList());
             try {
-                session.getRemote().sendString(gson.toJson(entitiesToRender));
+                session.getRemote().sendString("");
+                for (RenderableEntityModel entityModel : entitiesToRender) {
+                    session.getRemote().sendString(gson.toJson(entityModel));
+                }
             } catch (IOException e) {
                 e.printStackTrace();
             }
