@@ -1,4 +1,4 @@
-# Wildflower [![CircleCI](https://circleci.com/gh/jason-h-hu/Wildflower/tree/master.svg?style=shield)](https://circleci.com/gh/jason-h-hu/Wildflower/tree/master) 
+# Wildflower [![CircleCI](https://circleci.com/gh/jason-h-hu/Wildflower/tree/master.svg?style=shield)](https://circleci.com/gh/jason-h-hu/Wildflower/tree/master)
 
 \# [Spark](http://sparkjava.com/) / [Gson](https://github.com/google/gson) / [JOML](http://joml-ci.github.io/JOML/) / [WebSockets](https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API) / [React](https://facebook.github.io/react/) / [Redux](http://redux.js.org/)
 
@@ -7,6 +7,4 @@ Wildflower is a sandbox game about intelligent, evolving creatures. Creatures in
 For more information, check out [The Wiki](https://github.com/jason-h-hu/Wildflower/wiki)!
 
 ### Inspiration
-[Robocode](http://robocode.sourceforge.net/), [BoxCar2D](http://boxcar2d.com/), [Spore](http://www.spore.com/), [Soda Constructor](https://en.wikipedia.org/wiki/Soda_Constructor), 
-
-
+[Robocode](http://robocode.sourceforge.net/), [BoxCar2D](http://boxcar2d.com/), [Spore](http://www.spore.com/), [Soda Constructor](https://en.wikipedia.org/wiki/Soda_Constructor), [Karl Sims](http://www.karlsims.com/evolved-virtual-creatures.html), [Braitenberg Vehicles](https://en.wikipedia.org/wiki/Braitenberg_vehicle)
