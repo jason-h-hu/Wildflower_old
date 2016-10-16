@@ -41,3 +41,8 @@ class TerrainTileModel implements Comparable<TerrainTileModel> {
     return iy1.compareTo(iy2);
   }
 }
+
+class TerrainTileUpdateModel {
+  String change;
+  TerrainTileModel item;
+}
