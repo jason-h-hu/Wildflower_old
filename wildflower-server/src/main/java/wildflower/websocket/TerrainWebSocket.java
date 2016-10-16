@@ -28,10 +28,11 @@ public class TerrainWebSocket {
             Set<TerrainTileModel> terrainTileModels = world.getTerrainFor(region).stream()
                     .map(TerrainTileModel::new).collect(Collectors.toSet());
             try {
-                session.getRemote().sendString("");
+                session.getRemote().sendString(WebSocketConstants.START_STREAM);
                 for (TerrainTileModel terrainTileModel : terrainTileModels) {
                     session.getRemote().sendString(gson.toJson(terrainTileModel));
                 }
+                session.getRemote().sendString(WebSocketConstants.END_STREAM);
             } catch (IOException e) {
                 e.printStackTrace();
             }

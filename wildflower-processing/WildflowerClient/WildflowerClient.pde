@@ -13,6 +13,7 @@ import websockets.WebsocketClient;
 import java.util.UUID;
 import java.util.Collection;
 import java.util.Set;
+import java.util.HashSet;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.lang.reflect.Type;
 
@@ -29,10 +30,13 @@ WebsocketClient terrainClient;
 
 Set<RenderableEntityModel> renderableEntities = new ConcurrentSkipListSet<RenderableEntityModel>();
 Set<TerrainTileModel> terrainTiles = new ConcurrentSkipListSet<TerrainTileModel>();
-boolean lock = false;
+boolean terrainComplete = false;
 
 PVector upperLeft = new PVector(0, 0);
 PVector lowerRight = new PVector(600, 600);
+
+int START_STREAM = 0;
+int STOP_STREAM = 1;
 
 void setup() {
    size(600, 600);
@@ -56,7 +60,7 @@ void setup() {
 }
 
 void draw() {
-  background(255);
+  if (!terrainComplete) return;
   fill(0);
   noStroke();
   for(TerrainTileModel tile : terrainTiles) {
@@ -114,8 +118,14 @@ void keyPressed() {
 }
 
 void webSocketEvent(String message) {
-  if (message.length() == 0) {
-    terrainTiles.clear();
+  if (message.startsWith("\n")) {
+    int code = Integer.parseInt(message.substring(1));
+    if (code == START_STREAM) {
+      terrainComplete = false;
+      terrainTiles.clear();
+    } else if (code == STOP_STREAM) {
+      terrainComplete = true;
+    }
     return;
   }
   terrainTiles.add(gson.fromJson(message, TerrainTileModel.class));
