@@ -6,6 +6,7 @@ import org.eclipse.jetty.websocket.api.annotations.OnWebSocketConnect;
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketMessage;
 import org.eclipse.jetty.websocket.api.annotations.WebSocket;
 import wildflower.api.ClientModel;
+import wildflower.api.ItemUpdateModel;
 import wildflower.api.TerrainTileModel;
 import wildflower.geometry.AxisAlignedBox;
 
@@ -18,6 +19,8 @@ import static wildflower.WildflowerServer.clientsBySession;
 import static wildflower.WildflowerServer.gson;
 import static wildflower.WildflowerServer.indexSession;
 import static wildflower.WildflowerServer.world;
+import static wildflower.api.ItemUpdateModel.Change.ADD;
+import static wildflower.api.ItemUpdateModel.Change.REMOVE;
 
 @WebSocket
 public class TerrainWebSocket {
@@ -28,15 +31,27 @@ public class TerrainWebSocket {
             Set<TerrainTileModel> terrainTileModels = world.getTerrainFor(region).stream()
                     .map(TerrainTileModel::new).collect(Collectors.toSet());
             try {
-                session.getRemote().sendString("");
+
+                // Send terrain tiles if they're new
                 for (TerrainTileModel terrainTileModel : terrainTileModels) {
-                    session.getRemote().sendString(gson.toJson(terrainTileModel));
+                    if (!client.state.terrainTileModels.contains(terrainTileModel)) {
+                        session.getRemote().sendString(gson.toJson(ItemUpdateModel.to(ADD, terrainTileModel)));
+                    }
                 }
+
+                // Reap terrain tiles if they're old
+                for (TerrainTileModel terrainTileModel : client.state.terrainTileModels) {
+                    if (!terrainTileModels.contains(terrainTileModel)) {
+                        session.getRemote().sendString(gson.toJson(ItemUpdateModel.to(REMOVE, terrainTileModel)));
+                    }
+                }
+
             } catch (IOException e) {
                 e.printStackTrace();
             }
 
             client.state.needsNewTerrain = false;
+            client.state.terrainTileModels = terrainTileModels;
         }
     }
 

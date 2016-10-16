@@ -31,4 +31,14 @@ public class TerrainTileModel {
             }
         }
     }
+
+    @Override
+    public boolean equals(Object other) {
+        return other instanceof TerrainTileModel && ((TerrainTileModel)other).index.equals(index);
+    }
+
+    @Override
+    public int hashCode() {
+        return index.hashCode();
+    }
 }

@@ -33,16 +33,18 @@ import static spark.Spark.webSocket;
 
 public class WildflowerServer {
     public static final World world;
+    public static final Gson gson;
+
+    public static final Map<Class<?>, List<Session>> sessionsByEndpoint;
+    public static final Map<Session, ClientModel> clientsBySession;
+    public static final Map<UUID, ClientModel> clientsById;
+
     private static final long ONE_MILLISECOND;
     private static final long ONE_SECOND;
     private static final int TARGET_FPS;
     private static final long OPTIMAL_TIME;
     private static boolean running;
-    public static final int webSocketPushDelay;
-    public static final Map<Class<?>, List<Session>> sessionsByEndpoint;
-    public static final Map<Session, ClientModel> clientsBySession;
-    public static final Map<UUID, ClientModel> clientsById;
-    public static final Gson gson;
+    private static final int webSocketPushDelay;
 
     static {
         world = new World();

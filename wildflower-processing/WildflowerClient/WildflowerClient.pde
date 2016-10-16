@@ -13,7 +13,9 @@ import websockets.WebsocketClient;
 import java.util.UUID;
 import java.util.Collection;
 import java.util.Set;
-import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.Map;
+import java.util.HashSet;
+import java.util.concurrent.ConcurrentHashMap;
 import java.lang.reflect.Type;
 
 Gson gson = new GsonBuilder()
@@ -23,20 +25,20 @@ Gson gson = new GsonBuilder()
   .registerTypeAdapter(UUID.class, new UuidDeserializer())
   .create();
 
-WebsocketClient entityClient;
 WebsocketClient viewportClient;
 WebsocketClient terrainClient;
 
-Set<RenderableEntityModel> renderableEntities = new ConcurrentSkipListSet<RenderableEntityModel>();
-Set<TerrainTileModel> terrainTiles = new ConcurrentSkipListSet<TerrainTileModel>();
-boolean lock = false;
+Map<PVector, TerrainTileModel> terrainTiles = new ConcurrentHashMap<PVector, TerrainTileModel>();
+boolean terrainComplete = false;
 
 PVector upperLeft = new PVector(0, 0);
 PVector lowerRight = new PVector(600, 600);
 
+int START_STREAM = 0;
+int STOP_STREAM = 1;
+
 void setup() {
    size(600, 600);
-   //entityClient = new WebsocketClient(this, "ws://localhost:9090/entity");
    viewportClient = new WebsocketClient(this, "ws://localhost:9090/viewport");
    terrainClient = new WebsocketClient(this, "ws://localhost:9090/terrain");
    
@@ -48,7 +50,6 @@ void setup() {
    client.viewport = viewport;
    client.id = UUID.randomUUID();
    
-  // entityClient.sendMessage(gson.toJson(client));
    viewportClient.sendMessage(gson.toJson(client));
    terrainClient.sendMessage(gson.toJson(client));
    
@@ -56,37 +57,34 @@ void setup() {
 }
 
 void draw() {
-  background(255);
   fill(0);
   noStroke();
-  for(TerrainTileModel tile : terrainTiles) {
+  for(TerrainTileModel tile : terrainTiles.values()) {
     float tileWidth = (tile.xCount - 1) * tile.gap;
     float tileHeight = (tile.xCount - 1) * tile.gap;
-    stroke(0);
-    strokeWeight(3);
-    noFill();
-    rect(tile.index.x * tileWidth - upperLeft.x, tile.index.y * tileHeight - upperLeft.y, tileWidth, tileHeight);
+    
     for (int x = 0; x < tile.xCount; x++) {
      for (int y = 0; y < tile.yCount; y++) {
        char terrainSurface = (char) tile.terrain[x][y];
        switch (terrainSurface) {
          case 's':
-           fill(200, 100, 0); break;
+           fill(200, 100, 0, 100); break;
          case 'g':
-           fill(10, 100, 10); break;
+           fill(10, 100, 10, 100); break;
          case 'd':
-           fill(100, 30, 0); break;
+           fill(100, 30, 0, 100); break;
          case 'w':
-           fill(10, 10, 100); break;
+           fill(10, 10, 100, 100); break;
        }
        noStroke();
-       rect((tileWidth * tile.index.x) + (x * tile.gap) - upperLeft.x, (tileHeight * tile.index.y) + (y * tile.gap) - upperLeft.y, tile.gap, tile.gap);
+       ellipse((tileWidth * tile.index.x) + (x * tile.gap) - upperLeft.x, (tileHeight * tile.index.y) + (y * tile.gap) - upperLeft.y, tile.gap, tile.gap);
      }
     }
-  }
-  
-  for (RenderableEntityModel entity : renderableEntities) {
-    ellipse(entity.location.x, entity.location.y, 10, 10); 
+    
+    stroke(0);
+    strokeWeight(3);
+    noFill();
+    rect(tile.index.x * tileWidth - upperLeft.x, tile.index.y * tileHeight - upperLeft.y, tileWidth, tileHeight);
   }
 }
 
@@ -114,9 +112,13 @@ void keyPressed() {
 }
 
 void webSocketEvent(String message) {
-  if (message.length() == 0) {
-    terrainTiles.clear();
-    return;
+  TerrainTileUpdateModel terrainTileUpdate = gson.fromJson(message, TerrainTileUpdateModel.class);
+  switch (terrainTileUpdate.change) {
+    case "ADD":
+      terrainTiles.put(terrainTileUpdate.item.index, terrainTileUpdate.item);
+      break;
+    case "REMOVE":
+      terrainTiles.remove(terrainTileUpdate.item.index);
+      break;
   }
-  terrainTiles.add(gson.fromJson(message, TerrainTileModel.class));
 }

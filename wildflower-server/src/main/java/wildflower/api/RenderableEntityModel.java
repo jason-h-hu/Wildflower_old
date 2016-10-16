@@ -14,4 +14,14 @@ public class RenderableEntityModel {
     public RenderableEntityModel(Entity entity) {
         this.location = entity.getLocation();
     }
+
+    @Override
+    public boolean equals(Object other) {
+        return other instanceof RenderableEntityModel && ((RenderableEntityModel)other).location.equals(location);
+    }
+
+    @Override
+    public int hashCode() {
+        return location.hashCode();
+    }
 }
