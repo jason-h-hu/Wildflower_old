@@ -39,21 +39,10 @@ public class WildflowerServer {
     public static final Map<Session, ClientModel> clientsBySession;
     public static final Map<UUID, ClientModel> clientsById;
 
-    private static final long ONE_MILLISECOND;
-    private static final long ONE_SECOND;
-    private static final int TARGET_FPS;
-    private static final long OPTIMAL_TIME;
-    private static boolean running;
-    private static final int webSocketPushDelay;
+    private static boolean running = false;
 
     static {
         world = new World();
-        ONE_MILLISECOND = 1000000;
-        ONE_SECOND = 1000000000;
-        TARGET_FPS = 60;
-        OPTIMAL_TIME = ONE_SECOND / TARGET_FPS;
-        running = false;
-        webSocketPushDelay = 10;
         clientsBySession = new ConcurrentHashMap<>();
         clientsById = new ConcurrentHashMap<>();
         sessionsByEndpoint = new ConcurrentHashMap<>();
@@ -88,61 +77,13 @@ public class WildflowerServer {
         sessionsByEndpoint.get(endpoint).remove(session);
     }
 
-    private static void runWorld() {
-        String threadName = Thread.currentThread().getName();
-        System.out.println("Startng world in " + threadName);
-        running = true;
-
-        double delta = 0;
-        long lastLoopTime = System.nanoTime();
-        long lastFpsTime = 0;
-        long now = lastLoopTime;
-        long updateLength = 0;
-        long framesPerSecond = 0;
-        int fps = 0;
-
-        while (running) {
-            now = System.nanoTime();
-            updateLength = now - lastLoopTime;
-            lastLoopTime = now;
-            delta = updateLength / ((double) OPTIMAL_TIME);
-            lastFpsTime += updateLength;
-            fps++;
-
-            if (lastFpsTime >= ONE_SECOND) {
-                framesPerSecond = fps;
-                lastFpsTime = 0;
-                fps = 0;
-            }
-
-            world.update(delta);
-
-            try {
-                Thread.sleep((lastLoopTime - System.nanoTime() + OPTIMAL_TIME) / ONE_MILLISECOND);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+    private static void tickWebSockets(float delta) {
+        if (sessionsByEndpoint.containsKey(EntityWebSocket.class)) {
+            sessionsByEndpoint.get(EntityWebSocket.class).forEach(EntityWebSocket::speakTo);
         }
-    }
 
-    private static void runWebSockets() {
-        String threadName = Thread.currentThread().getName();
-        System.out.println("Starting websocket streams in " + threadName);
-
-        while (running) {
-            if (sessionsByEndpoint.containsKey(EntityWebSocket.class)) {
-                sessionsByEndpoint.get(EntityWebSocket.class).forEach(EntityWebSocket::speakTo);
-            }
-
-            if (sessionsByEndpoint.containsKey(TerrainWebSocket.class)) {
-                sessionsByEndpoint.get(TerrainWebSocket.class).forEach(TerrainWebSocket::speakTo);
-            }
-
-            try {
-                Thread.sleep(webSocketPushDelay);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+        if (sessionsByEndpoint.containsKey(TerrainWebSocket.class)) {
+            sessionsByEndpoint.get(TerrainWebSocket.class).forEach(TerrainWebSocket::speakTo);
         }
     }
 
@@ -179,8 +120,9 @@ public class WildflowerServer {
         }, gson::toJson);
 
         // Kick things off!
+        running = true;
         ExecutorService executor = Executors.newCachedThreadPool();
-        executor.submit(WildflowerServer::runWorld);
-        executor.submit(WildflowerServer::runWebSockets);
+        executor.submit(() -> new Ticker("World", 60, world::update, () -> running).run());
+        executor.submit(() -> new Ticker("WebSockets", 60, WildflowerServer::tickWebSockets, () -> running).run());
     }
 }
