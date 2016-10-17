@@ -57,6 +57,7 @@ void setup() {
 }
 
 void draw() {
+  background(0);
   fill(0);
   noStroke();
   for(TerrainTileModel tile : terrainTiles.values()) {
@@ -68,13 +69,13 @@ void draw() {
        char terrainSurface = (char) tile.terrain[x][y];
        switch (terrainSurface) {
          case 's':
-           fill(200, 100, 0, 100); break;
+           fill(200, 100, 0); break;
          case 'g':
-           fill(10, 100, 10, 100); break;
+           fill(10, 100, 10); break;
          case 'd':
-           fill(100, 30, 0, 100); break;
+           fill(100, 30, 0); break;
          case 'w':
-           fill(10, 10, 100, 100); break;
+           fill(10, 10, 100); break;
        }
        noStroke();
        ellipse((tileWidth * tile.index.x) + (x * tile.gap) - upperLeft.x, (tileHeight * tile.index.y) + (y * tile.gap) - upperLeft.y, tile.gap, tile.gap);
@@ -112,6 +113,7 @@ void keyPressed() {
 }
 
 void webSocketEvent(String message) {
+  println(message);
   TerrainTileUpdateModel terrainTileUpdate = gson.fromJson(message, TerrainTileUpdateModel.class);
   switch (terrainTileUpdate.change) {
     case "ADD":

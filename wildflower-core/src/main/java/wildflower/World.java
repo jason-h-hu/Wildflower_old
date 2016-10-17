@@ -64,7 +64,7 @@ public class World {
         return this.entities.values();
     }
 
-    public void update(double delta) {
+    public void update(float delta) {
         this.reapDeadCreatures();
         this.updateEntities();
     }
