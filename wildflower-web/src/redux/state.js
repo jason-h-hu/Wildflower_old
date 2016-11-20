@@ -1,4 +1,3 @@
 export const initialState = {
-  messages: [],
-  entities: [],
+  terrain: [],
 }

@@ -1,21 +1,30 @@
+import * as _ from 'lodash';
 import { combineReducers } from 'redux';
 import { initialState } from './state';
 import * as Action from './actions';
 
-export function messages(state = initialState.messages, action) {
-	switch (action.type) {
-		case Action.ADD_MESSAGE:
-			return [action.message];
-		default:
-			return state;
-	}
+function indexToKey(index) {
+  return `x:${index.x}y:${index.y}`;
 }
 
-export function entities(state = initialState.entities, action) {
-	return action.type === Action.SET_ENTITIES ? action.entities : state;
+export function terrain(state = initialState.terrain, action) {
+  if (action.type !== Action.UPDATE_TERRAIN_TILE) {
+    return state;
+  }
+
+  switch (action.data.change) {
+    case 'ADD':
+      return _.extend({}, state, {
+        [indexToKey(action.data.item.index)]: action.data.item
+      });
+    case 'UDPATE':
+    case 'REMOVE':
+    default:
+      return state;
+  }
 }
 
 export const reducer = combineReducers({
-	messages,
-	entities
+	terrain,
 });
+

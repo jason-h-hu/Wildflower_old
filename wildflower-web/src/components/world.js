@@ -1,18 +1,17 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
+import * as _ from 'lodash';
+import * as THREE from 'three';
 
 export class World extends React.Component {
     render() {
-        const entities = this.props.entities.map(entity => <circle cx={entity.location.x} cy={entity.location.y} r="10" />);
-        const style = {width: "100%", height: "100%"};
-        return <svg style={style}>{entities}</svg>;
+      return <p>{JSON.stringify(this.props.terrain)}</p>
     }
 }
 
 function mapStateToProps(state) {
-    return {
-        entities: state.entities
-    };
+  console.log(state)
+  return _.pick(state, ['terrain']);
 }
 
 export const ConnectedWorld = connect(mapStateToProps)(World);

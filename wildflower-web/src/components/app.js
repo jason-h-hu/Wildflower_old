@@ -4,23 +4,16 @@ import { ConnectedWorld } from './world';
 
 export class App extends React.Component {
     render() {
-        const messageElements = this.props.messages.map(function(message) {
-            return <div>{message.data}</div>;
-        });
-
         return (
             <div>
                 <ConnectedWorld/>
-                {messageElements}
             </div>
         );
     }
 }
 
 function mapStateToProps(state) {
-    return {
-        messages: state.messages
-    };
+    return {};
 }
 
 export const ConnectedApp = connect(mapStateToProps)(App);

@@ -23,15 +23,24 @@ const client = {
     }
 };
 
-var entitySocket = new WebSocket(`ws://${location.hostname}:${location.port}/entity`);
-entitySocket.onopen = function() { entitySocket.send(JSON.stringify(client)); };
+function connectWebSocket(path) {
+  var socket = new WebSocket(`ws://${location.hostname}:${location.port}/${path}`);
+  socket.onopen = function() { socket.send(JSON.stringify(client)); };
+  return socket;
+}
 
-var viewportSocket = new WebSocket(`ws://${location.hostname}:${location.port}/viewport`);
-viewportSocket.onopen = function() { viewportSocket.send(JSON.stringify(client)); };
+var entitySocket = connectWebSocket('entity');
+var terrainSocket = connectWebSocket('terrain');
+var viewportSocket = connectWebSocket('viewport');
 
-entitySocket.onmessage = function(message) {
-  console.log(message);
-  store.dispatch(Action.setEntities(JSON.parse(message.data)));
+terrainSocket.onmessage = function(message) {
+  var data = {};
+  try {
+    data = JSON.parse(message.data);
+  } catch(err) {
+    console.log(`We could not parse out ${message.data}`);
+  }
+  return store.dispatch(Action.updateTerrainTile(data));
 }
 
 if (appElement !== null) {
