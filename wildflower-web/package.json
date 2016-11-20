@@ -26,6 +26,8 @@
     "react": "^15.3.2",
     "react-dom": "^15.3.2",
     "react-redux": "^4.4.5",
-    "redux": "^3.6.0"
+    "react-three": "^0.9.4",
+    "redux": "^3.6.0",
+    "three": "^0.74.0"
   }
 }
