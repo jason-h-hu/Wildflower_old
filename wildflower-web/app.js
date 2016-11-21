@@ -1,16 +1,25 @@
+var terrainTilesInScene = {};
+
 var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
   var r = Math.random()*16|0, v = c == 'x' ? r : (r&0x3|0x8);
   return v.toString(16);
 });
+
+function tryAndParseJson(jsonString) {
+  try {
+    return JSON.parse(jsonString);
+  } catch (err) {
+    console.log(`Could not parse ${jsonString} as JSON due to ${err}`);
+  }
+}
 
 function getIndexFromPoint(point, count, gap) {
   return (point / gap) + (count / 2);
 }
 
 function getViewport(viewAngle, aspectRatio, cameraX, cameraY, cameraZ) {
-  console.log(viewAngle, aspectRatio, cameraX, cameraY, cameraZ)
-  var radianViewAngle = (viewAngle / 2) * (2*Math.PI / 360);
-  var viewportHeight = 2 * cameraZ * Math.tan(radianViewAngle);
+  var radianViewAngle = viewAngle * (Math.PI / 180);
+  var viewportHeight = 2 * cameraZ * Math.tan(radianViewAngle / 2);
   var viewportWidth = aspectRatio * viewportHeight;
 
   var heightRadius = viewportHeight / 2;
@@ -113,22 +122,49 @@ var terrainSocket = connectWebSocket('terrain', client);
 var viewportSocket = connectWebSocket('viewport', client);
 
 terrainSocket.onmessage = function(message) {
-  var data = {};
-  try {
-    data = JSON.parse(message.data);
-  } catch(err) {
-    console.log(`We could not parse out ${message.data}`);
+  var terrainTileItemUpdate = tryAndParseJson(message.data);
+  switch (terrainTileItemUpdate.change) {
+    case 'ADD':
+      terrainTilesInScene[terrainTileItemUpdate.item.index] = terrainTileItemUpdate.item;
+      var terrainTileMesh = makePlane(terrainTileItemUpdate.item);
+      scene.add(terrainTileMesh);
+      break;
+    case 'REMOVE':
+      var tileMeshToRemove = terrainTilesInScene[terrainTileUpdate.item.index];
+      delete terrainTilesInScene[terrainTileUpdate.item.index];
+      scene.remove(tileMeshToRemove);
+      break;
   }
-  console.log(data);
-  var plane = makePlane(data.item);
-  scene.add(plane);
   renderer.render(scene, camera);
 }
 
-var tempHeight = 400;
-setInterval(function() {
-  camera.position.set(250,250,tempHeight);
+var updateViewportAndRender = _.throttle(function() {
+  viewportSocket.send(JSON.stringify(getViewport(VIEW_ANGLE, ASPECT, camera.position.x, camera.position.y, camera.position.z)));
   renderer.render(scene, camera);
-  tempHeight += 10;
-  viewportSocket.send(JSON.stringify(getViewport(VIEW_ANGLE, ASPECT, 250, 250, tempHeight)));
-}, 100)
+}, 100);
+
+document.addEventListener('keydown', function(event) {
+  event.preventDefault();
+  switch (event.keyCode) {
+    case 38: // Up
+      camera.position.set(camera.position.x, camera.position.y + 10, camera.position.z);
+      break;
+    case 40: // Down
+      camera.position.set(camera.position.x, camera.position.y - 10, camera.position.z);
+      break;
+    case 37: // Left
+      camera.position.set(camera.position.x - 10, camera.position.y, camera.position.z);
+      break;
+    case 39: // Right
+      camera.position.set(camera.position.x + 10, camera.position.y, camera.position.z);
+      break;
+  }
+  updateViewportAndRender();
+});
+
+document.addEventListener('wheel', function(event) {
+  event.preventDefault();
+  var z = Math.min(1600, Math.max(100, camera.position.z - event.deltaY));
+  camera.position.set(camera.position.x, camera.position.y, z);
+  updateViewportAndRender();
+});
