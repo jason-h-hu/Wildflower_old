@@ -123,16 +123,16 @@ var viewportSocket = connectWebSocket('viewport', client);
 
 terrainSocket.onmessage = function(message) {
   var terrainTileItemUpdate = tryAndParseJson(message.data);
+  var indexKey = terrainTileItemUpdate.item.index.x + ',' + terrainTileItemUpdate.item.index.y;
+  console.log(scene.children.length);
   switch (terrainTileItemUpdate.change) {
     case 'ADD':
-      terrainTilesInScene[terrainTileItemUpdate.item.index] = terrainTileItemUpdate.item;
-      var terrainTileMesh = makePlane(terrainTileItemUpdate.item);
-      scene.add(terrainTileMesh);
+      terrainTilesInScene[indexKey] = makePlane(terrainTileItemUpdate.item);
+      scene.add(terrainTilesInScene[indexKey]);
       break;
     case 'REMOVE':
-      var tileMeshToRemove = terrainTilesInScene[terrainTileUpdate.item.index];
-      delete terrainTilesInScene[terrainTileUpdate.item.index];
-      scene.remove(tileMeshToRemove);
+      scene.remove(terrainTilesInScene[indexKey]);
+      delete terrainTilesInScene[indexKey];
       break;
   }
   renderer.render(scene, camera);
