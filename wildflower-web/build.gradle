@@ -1,3 +1,0 @@
-plugins {
-    id 'com.moowork.node' version '0.13'
-}
