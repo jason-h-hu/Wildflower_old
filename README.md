@@ -1,6 +1,6 @@
 # Wildflower [![CircleCI](https://circleci.com/gh/jason-h-hu/Wildflower/tree/master.svg?style=shield)](https://circleci.com/gh/jason-h-hu/Wildflower/tree/master)
 
-\# [Spark](http://sparkjava.com/) / [Gson](https://github.com/google/gson) / [JOML](http://joml-ci.github.io/JOML/) / [WebSockets](https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API)
+\# [Spark](http://sparkjava.com/) / [Gson](https://github.com/google/gson) / [JOML](http://joml-ci.github.io/JOML/) / [WebSockets](https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API) / [Three.js](https://threejs.org/)
 
 Wildflower is a sandbox game about intelligent, evolving creatures. Creatures in wildflower are controlled by Agents, which are programs written by Wildflower players. Agents interact with the Wildflower Server via HTTP in order to manipulate their Creature, and observe the Wildflower World through its eyes.
 
